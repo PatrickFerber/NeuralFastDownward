@@ -1,12 +1,15 @@
 #include "sampling.h"
 
 #include "successor_generator.h"
+#include "predecessor_generator.h"
 
 #include "../task_proxy.h"
 
 #include "../task_utils/task_properties.h"
 #include "../utils/memory.h"
 #include "../utils/rng.h"
+
+#include <queue>
 
 using namespace std;
 
@@ -30,9 +33,10 @@ bool sample_next_state(
 
     pre_previous_state = move(previous_state);
     previous_state = move(current_state);
-
+    cout << "D" << endl;
     vector<OperatorID> applicable_operators;
     generator.generate_applicable_ops(previous_state, applicable_operators);
+    cout << "E" << endl;
     // If there are no applicable operators, do not walk further.
     if (applicable_operators.empty()) {
         current_state = move(previous_state);
@@ -139,7 +143,7 @@ S sample_with_random_walk(
         const function<bool (S &)> *is_dead_end = nullptr,
         const function<bool (S &)> *is_valid_state = nullptr) {
     // Sample one state with a random walk of length length.
-
+    cout << "C" << endl;
     S current_state(state);
     S candidate_state(current_state);
     S previous_state(current_state);
@@ -247,6 +251,89 @@ static State sample_state_with_random_forward_walk(
         operators, successor_generator, initial_state, length, rng, is_dead_end);
 }
 
+static PartialAssignment sample_partial_assignment_with_random_backward_walk(
+    const RegressionTaskProxy &regression_task_proxy, const PartialAssignment &goals,
+    const predecessor_generator::PredecessorGenerator &predecessor_generator,
+    int length,
+    utils::RandomNumberGenerator &rng,
+    bool deprioritize_undoing_steps,
+    const ValidStateDetector & is_valid_state,
+    const PartialAssignmentBias *bias,
+    bool probabilistic_bias,
+    double adapt_bias,
+    const PartialDeadEndDetector &is_dead_end) {
+
+    const function<PartialAssignment (const PartialAssignment &, const OperatorID &)>
+            construct_candidate =
+            [&] (const PartialAssignment &s, const OperatorID &op_id) -> PartialAssignment {
+                RegressionOperatorProxy op_proxy = regression_task_proxy.
+                        get_regression_operator(op_id);
+                assert(task_properties::is_applicable(op_proxy, s));
+                return op_proxy.get_anonym_predecessor(s);
+    };
+    return sample_with_random_walk(
+            goals,
+            length,
+            predecessor_generator,
+            construct_candidate,
+            rng,
+            deprioritize_undoing_steps,
+            bias,
+            probabilistic_bias,
+            adapt_bias,
+            &is_dead_end,
+            &is_valid_state
+            );
+}
+
+static PartialAssignment sample_partial_assignments_with_random_backward_walks(
+    const RegressionTaskProxy &regression_task_proxy,
+    const PartialAssignment &goals,
+    const predecessor_generator::PredecessorGenerator &predecessor_generator,
+    int init_h,
+    double average_operator_cost,
+    utils::RandomNumberGenerator &rng,
+    bool deprioritize_undoing_steps,
+    const ValidStateDetector  is_valid_state,
+    const PartialAssignmentBias *bias,
+    bool probabilistic_bias,
+    const PartialDeadEndDetector is_dead_end) {
+    int n;
+    if (init_h == 0) {
+        n = 10;
+    } else {
+        /*
+          Convert heuristic value into an approximate number of actions
+          (does nothing on unit-cost problems).
+          average_operator_cost cannot equal 0, as in this case, all operators
+          must have costs of 0 and in this case the if-clause triggers.
+         */
+        assert(average_operator_cost != 0);
+        int solution_steps_estimate = int((init_h / average_operator_cost) + 0.5);
+        n = 4 * solution_steps_estimate;
+    }
+    double p = 0.5;
+    /* The expected walk length is np = 2 * estimated number of solution steps.
+       (We multiply by 2 because the heuristic is underestimating.) */
+
+    // Calculate length of random walk according to a binomial distribution.
+    int length = 0;
+    for (int j = 0; j < n; ++j) {
+        double random = rng(); // [0..1)
+        if (random < p)
+            ++length;
+    }
+
+
+    return sample_partial_assignment_with_random_backward_walk(
+        regression_task_proxy, goals, predecessor_generator,
+        length, rng, deprioritize_undoing_steps, is_valid_state, bias,
+        probabilistic_bias, -1, is_dead_end);
+}
+
+
+
+
 RandomWalkSampler::RandomWalkSampler(
     const TaskProxy &task_proxy,
     utils::RandomNumberGenerator &rng)
@@ -297,5 +384,155 @@ vector<State> RandomWalkSampler::sample_states(
         samples.push_back(sample_state(init_h, is_dead_end));
     }
     return samples;
+}
+
+
+
+RandomRegressionWalkSampler::RandomRegressionWalkSampler(
+    const RegressionTaskProxy &regression_task_proxy,
+    utils::RandomNumberGenerator &rng)
+    : regression_task_proxy(regression_task_proxy),
+      predecessor_generator(utils::make_unique_ptr<predecessor_generator::PredecessorGenerator>(regression_task_proxy)),
+      goals(regression_task_proxy.get_goal_assignment()),
+      average_operator_costs(task_properties::get_average_operator_cost(regression_task_proxy)),
+      rng(rng) {
+}
+
+RandomRegressionWalkSampler::~RandomRegressionWalkSampler() {
+}
+
+PartialAssignment RandomRegressionWalkSampler::sample_state(
+    int init_h,
+    bool deprioritize_undoing_steps,
+    const ValidStateDetector  &is_valid_state,
+    const PartialAssignmentBias *bias,
+    bool probabilistic_bias,
+    const PartialDeadEndDetector &is_dead_end) const {
+    return sample_partial_assignments_with_random_backward_walks(
+        regression_task_proxy,
+        goals,
+        *predecessor_generator,
+        init_h,
+        average_operator_costs,
+        rng,
+        deprioritize_undoing_steps,
+        is_valid_state,
+        bias, probabilistic_bias,
+        is_dead_end);
+}
+
+PartialAssignment RandomRegressionWalkSampler::sample_state_length(
+    const PartialAssignment &goals,
+    int length,
+    bool deprioritize_undoing_steps,
+    const ValidStateDetector &is_valid_state,
+    const PartialAssignmentBias *bias,
+    bool probabilistic_bias,
+    double adapt_bias,
+    const PartialDeadEndDetector &is_dead_end) const {
+    return sample_partial_assignment_with_random_backward_walk(
+        regression_task_proxy,
+        goals,
+        *predecessor_generator,
+        length,
+        rng,
+        deprioritize_undoing_steps,
+        is_valid_state,
+        bias, probabilistic_bias, adapt_bias,
+        is_dead_end);
+}
+
+vector<PartialAssignment> RandomRegressionWalkSampler::sample_states(
+    int num_samples,
+    int init_h,
+    bool deprioritize_undoing_steps,
+    const ValidStateDetector &is_valid_state,
+    const PartialAssignmentBias *bias,
+    bool probabilistic_bias,
+    const PartialDeadEndDetector &is_dead_end) const {
+    vector<PartialAssignment> samples;
+    samples.reserve(num_samples);
+    for (int i = 0; i < num_samples; ++i) {
+        samples.push_back(sample_state(
+                init_h, deprioritize_undoing_steps, is_valid_state, bias,
+                probabilistic_bias, is_dead_end));
+    }
+    return samples;
+}
+
+
+std::pair<PartialAssignmentRegistry, utils::HashMap<size_t, int>> RandomRegressionWalkSampler::sample_area(
+        const PartialAssignment &initial,
+        const int max_cost,
+        const int max_states,
+        bool check_mutexes) const {
+
+    PartialAssignmentRegistry registry;
+    utils::HashMap<size_t, int> id2cost;  // aka closed list. <ID, current cost>
+
+    vector<OperatorID> applicable_operators;
+
+    auto cmp = [](pair<int, int> left, pair<int, int> right) { return left.first > right.first; };
+    std::priority_queue<pair<int, int>, std::vector<pair<int, int>>, decltype(cmp)> open(cmp);
+
+    // initialize
+    PartialAssignment init(initial);
+    size_t cur_id = registry.lookup_or_insert_by_assignment(init);
+    open.emplace(0, cur_id);
+
+    //search
+    int progress = -1;
+    while(!open.empty()) {
+        pair<size_t, int> cost_id = open.top();
+        open.pop();
+        int cur_cost = cost_id.first;
+        cur_id = cost_id.second;
+        if (cur_cost > progress) {
+            progress = cur_cost;
+            cout << progress << "(" << open.size() << ")," << flush;
+
+        }
+        if (cur_cost > max_cost) {
+            cout << "Hit cost limit. Expanded states: " << id2cost.size() << endl;
+            break;
+        }
+
+        auto best_cost = id2cost.find(cur_id);
+        if (best_cost != id2cost.end()) {
+            assert(cur_cost >= best_cost->second);
+            continue;
+        }
+        id2cost[cur_id] = cur_cost;
+        if (max_states >= 0 && id2cost.size() >= (size_t) max_states) {
+            cout << "Hit state limit. Expanded states: " << id2cost.size() << endl;
+            break;
+        }
+
+        const PartialAssignment cur_assignment = registry.lookup_by_id(cur_id);
+        applicable_operators.clear();
+        predecessor_generator->generate_applicable_ops(
+                cur_assignment, applicable_operators);
+        for (OperatorID &op_id: applicable_operators) {
+            RegressionOperatorProxy next_op = regression_task_proxy.get_regression_operator(op_id);
+            assert(task_properties::is_applicable(next_op, cur_assignment));
+            PartialAssignment next_assignment = next_op.get_anonym_predecessor(
+                    cur_assignment);
+            if (check_mutexes) {
+                if (next_assignment.violates_mutexes()){
+                    continue;
+                }
+//                auto next_state = next_assignment.get_full_state(check_mutexes, rng);
+//                if (!next_state.first) {
+//                    continue;
+//                }
+            }
+            size_t next_id = registry.lookup_or_insert_by_assignment(
+                    next_assignment);
+
+            int next_cost = cur_cost + next_op.get_cost();
+            open.emplace(next_cost, next_id);
+        }
+    }
+    return {move(registry), move(id2cost)};
 }
 }

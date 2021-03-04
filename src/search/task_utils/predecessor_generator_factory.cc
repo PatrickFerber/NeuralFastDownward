@@ -1,8 +1,9 @@
-#include "successor_generator_factory.h"
+#include "predecessor_generator_factory.h"
 
+#include "successor_generator_factory.h"
 #include "successor_generator_internals.h"
 
-#include "../task_proxy.h"
+#include "regression_task_proxy.h"
 
 #include "../utils/collections.h"
 #include "../utils/memory.h"
@@ -55,16 +56,18 @@ using namespace std;
   by a begin and end index into the overall operator sequence.
 */
 
-namespace successor_generator {
+namespace predecessor_generator {
+    using namespace successor_generator;
 
-SuccessorGeneratorFactory::SuccessorGeneratorFactory(
-    const TaskProxy &task_proxy)
-    : task_proxy(task_proxy) {
+
+PredecessorGeneratorFactory::PredecessorGeneratorFactory(
+    const RegressionTaskProxy &regression_task_proxy)
+    : regression_task_proxy(regression_task_proxy) {
 }
 
-SuccessorGeneratorFactory::~SuccessorGeneratorFactory() = default;
+PredecessorGeneratorFactory::~PredecessorGeneratorFactory() = default;
 
-GeneratorPtr SuccessorGeneratorFactory::construct_fork(
+GeneratorPtr PredecessorGeneratorFactory::construct_fork(
     vector<GeneratorPtr> nodes) const {
     int size = nodes.size();
     if (size == 1) {
@@ -79,7 +82,7 @@ GeneratorPtr SuccessorGeneratorFactory::construct_fork(
     }
 }
 
-GeneratorPtr SuccessorGeneratorFactory::construct_leaf(
+GeneratorPtr PredecessorGeneratorFactory::construct_leaf(
     OperatorRange range) const {
     assert(!range.empty());
     vector<OperatorID> operators;
@@ -96,9 +99,9 @@ GeneratorPtr SuccessorGeneratorFactory::construct_leaf(
     }
 }
 
-GeneratorPtr SuccessorGeneratorFactory::construct_switch(
+GeneratorPtr PredecessorGeneratorFactory::construct_switch(
     int switch_var_id, ValuesAndGenerators values_and_generators) const {
-    VariablesProxy variables = task_proxy.get_variables();
+    VariablesProxy variables = regression_task_proxy.get_variables();
     int var_domain = variables[switch_var_id].get_domain_size();
     int num_children = values_and_generators.size();
 
@@ -128,7 +131,7 @@ GeneratorPtr SuccessorGeneratorFactory::construct_switch(
     }
 }
 
-GeneratorPtr SuccessorGeneratorFactory::construct_recursive(
+GeneratorPtr PredecessorGeneratorFactory::construct_recursive(
     int depth, OperatorRange range) const {
     vector<GeneratorPtr> nodes;
     OperatorGrouper grouper_by_var(
@@ -162,7 +165,7 @@ GeneratorPtr SuccessorGeneratorFactory::construct_recursive(
     return construct_fork(move(nodes));
 }
 
-static vector<FactPair> build_sorted_precondition(const OperatorProxy &op) {
+static vector<FactPair> build_sorted_precondition(const RegressionOperatorProxy &op) {
     vector<FactPair> precond;
     precond.reserve(op.get_preconditions().size());
     for (FactProxy pre : op.get_preconditions())
@@ -172,10 +175,10 @@ static vector<FactPair> build_sorted_precondition(const OperatorProxy &op) {
     return precond;
 }
 
-GeneratorPtr SuccessorGeneratorFactory::create() {
-    OperatorsProxy operators = task_proxy.get_operators();
+GeneratorPtr PredecessorGeneratorFactory::create() {
+    RegressionOperatorsProxy operators = regression_task_proxy.get_regression_operators();
     operator_infos.reserve(operators.size());
-    for (OperatorProxy op : operators) {
+    for (RegressionOperatorProxy op : operators) {
         operator_infos.emplace_back(
             OperatorID(op.get_id()), build_sorted_precondition(op));
     }

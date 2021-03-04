@@ -68,6 +68,27 @@ using namespace std;
 */
 
 namespace successor_generator {
+
+inline OperatorID min_op_id(OperatorID &op_id1, OperatorID &op_id2) {
+    if (op_id1.get_index() == -1) {
+        return op_id2;
+    } else if (op_id2.get_index() == -1) {
+        return op_id1;
+    } else {
+        return (op_id1.get_index() < op_id2.get_index())? op_id1: op_id2;
+    }
+}
+
+inline OperatorID max_op_id(OperatorID &op_id1, OperatorID &op_id2) {
+    if (op_id1.get_index() == -1) {
+        return op_id2;
+    } else if (op_id2.get_index() == -1) {
+        return op_id1;
+    } else {
+        return (op_id1.get_index() > op_id2.get_index())? op_id1: op_id2;
+    }
+}
+
 GeneratorForkBinary::GeneratorForkBinary(
     unique_ptr<GeneratorBase> generator1,
     unique_ptr<GeneratorBase> generator2)
@@ -80,6 +101,14 @@ GeneratorForkBinary::GeneratorForkBinary(
     assert(this->generator2);
 }
 
+OperatorID GeneratorForkBinary::generate_min_applicable_op(
+        const vector<int> &state,
+        bool reject_unassigned) const {
+    OperatorID op_id1 = generator1->generate_min_applicable_op(state, reject_unassigned);
+    OperatorID op_id2 = generator2->generate_min_applicable_op(state, reject_unassigned);
+
+    return min_op_id(op_id1, op_id2);
+}
 void GeneratorForkBinary::generate_applicable_ops(
     const vector<int> &state, vector<OperatorID> &applicable_ops) const {
     generator1->generate_applicable_ops(state, applicable_ops);
@@ -95,51 +124,164 @@ GeneratorForkMulti::GeneratorForkMulti(vector<unique_ptr<GeneratorBase>> childre
     assert(this->children.empty() || this->children.size() >= 2);
 }
 
+OperatorID GeneratorForkMulti::generate_min_applicable_op(
+        const vector<int> &state,
+        bool reject_unassigned) const {
+    OperatorID min_id(-1);
+    for (const auto &generator : children) {
+        OperatorID op_id = generator->generate_min_applicable_op(
+                state, reject_unassigned);
+        min_id = min_op_id(min_id, op_id);
+    }
+    return min_id;
+}
+
 void GeneratorForkMulti::generate_applicable_ops(
     const vector<int> &state, vector<OperatorID> &applicable_ops) const {
     for (const auto &generator : children)
         generator->generate_applicable_ops(state, applicable_ops);
 }
 
+
+GeneratorSwitchBase::GeneratorSwitchBase(
+        int switch_var_id, bool covers_all_values)
+        : switch_var_id(switch_var_id),
+          covers_all_values(covers_all_values) {}
+
 GeneratorSwitchVector::GeneratorSwitchVector(
-    int switch_var_id, vector<unique_ptr<GeneratorBase>> &&generator_for_value)
-    : switch_var_id(switch_var_id),
+    int switch_var_id, vector<unique_ptr<GeneratorBase>> &&generator_for_value,
+    bool covers_all_values)
+    : GeneratorSwitchBase(switch_var_id, covers_all_values),
       generator_for_value(move(generator_for_value)) {
 }
 
+OperatorID GeneratorSwitchVector::generate_min_applicable_op(
+        const vector<int> &state,
+        bool reject_unassigned) const {
+    int val = state[switch_var_id];
+    if (val != PartialAssignment::UNASSIGNED) {
+        const unique_ptr<GeneratorBase> &generator_for_val = generator_for_value[val];
+        if (generator_for_val) {
+            return generator_for_val->generate_min_applicable_op(state, reject_unassigned);
+        }
+        return OperatorID(-1);
+    } else if (reject_unassigned) {
+        if (covers_all_values) {
+            // choose worst best case
+            OperatorID max_id(-1);
+            for (auto &generator_for_val: generator_for_value) {
+                if (generator_for_val) {
+                    OperatorID op_id = generator_for_val->generate_min_applicable_op(state, reject_unassigned);
+                    max_id = max_op_id(max_id, op_id);
+                }
+            }
+            return max_id;
+        } else {
+            return OperatorID(-1);
+        }
+    } else {
+        OperatorID min_id(-1);
+        for (auto &generator_for_val: generator_for_value) {
+            if (generator_for_val) {
+                OperatorID op_id = generator_for_val->generate_min_applicable_op(state, reject_unassigned);
+                min_id = min_op_id(min_id, op_id);
+            }
+        }
+        return min_id;
+    }
+}
 void GeneratorSwitchVector::generate_applicable_ops(
     const vector<int> &state, vector<OperatorID> &applicable_ops) const {
+    //todo
     int val = state[switch_var_id];
-    const unique_ptr<GeneratorBase> &generator_for_val = generator_for_value[val];
-    if (generator_for_val) {
-        generator_for_val->generate_applicable_ops(state, applicable_ops);
+    if (val != PartialAssignment::UNASSIGNED) {
+        const unique_ptr<GeneratorBase> &generator_for_val = generator_for_value[val];
+        if (generator_for_val) {
+            generator_for_val->generate_applicable_ops(state, applicable_ops);
+        }
+    } else {
+       for (auto &generator_for_val: generator_for_value) {
+            if (generator_for_val) {
+                generator_for_val->generate_applicable_ops(state, applicable_ops);
+            }
+        }
     }
 }
 
 GeneratorSwitchHash::GeneratorSwitchHash(
     int switch_var_id,
-    unordered_map<int, unique_ptr<GeneratorBase>> &&generator_for_value)
-    : switch_var_id(switch_var_id),
+    unordered_map<int, unique_ptr<GeneratorBase>> &&generator_for_value,
+    bool covers_all_values)
+    : GeneratorSwitchBase(switch_var_id, covers_all_values),
       generator_for_value(move(generator_for_value)) {
+}
+
+OperatorID GeneratorSwitchHash::generate_min_applicable_op(
+        const vector<int> &state,
+        bool reject_unassigned) const {
+    int val = state[switch_var_id];
+    if (val != PartialAssignment::UNASSIGNED) {
+        const auto &child = generator_for_value.find(val);
+        if (child != generator_for_value.end()) {
+            const unique_ptr<GeneratorBase> &generator_for_val = child->second;
+            return generator_for_val->generate_min_applicable_op(state, reject_unassigned);
+        }
+        return OperatorID(-1);
+    } else if(reject_unassigned) {
+        if (covers_all_values) {
+            OperatorID max_id(-1);
+            for (auto &iter: generator_for_value){
+                OperatorID op_id = iter.second->generate_min_applicable_op(state, reject_unassigned);
+                max_id = max_op_id(max_id, op_id);
+            }
+            return max_id;
+        } else {
+            return OperatorID(-1);
+        }
+    } else {
+        OperatorID min_id(-1);
+        for (auto &iter: generator_for_value){
+            OperatorID op_id = iter.second->generate_min_applicable_op(state, reject_unassigned);
+            min_id = min_op_id(min_id, op_id);
+        }
+        return min_id;
+    }
 }
 
 void GeneratorSwitchHash::generate_applicable_ops(
     const vector<int> &state, vector<OperatorID> &applicable_ops) const {
     int val = state[switch_var_id];
-    const auto &child = generator_for_value.find(val);
-    if (child != generator_for_value.end()) {
-        const unique_ptr<GeneratorBase> &generator_for_val = child->second;
-        generator_for_val->generate_applicable_ops(state, applicable_ops);
+    if (val != PartialAssignment::UNASSIGNED) {
+        const auto &child = generator_for_value.find(val);
+        if (child != generator_for_value.end()) {
+            const unique_ptr<GeneratorBase> &generator_for_val = child->second;
+            generator_for_val->generate_applicable_ops(state, applicable_ops);
+        }
+    } else {
+        for (auto &iter: generator_for_value){
+            iter.second->generate_applicable_ops(state, applicable_ops);
+        }
     }
 }
 
 GeneratorSwitchSingle::GeneratorSwitchSingle(
-    int switch_var_id, int value, unique_ptr<GeneratorBase> generator_for_value)
-    : switch_var_id(switch_var_id),
+    int switch_var_id, int value, unique_ptr<GeneratorBase> generator_for_value,
+    bool covers_all_values)
+    : GeneratorSwitchBase(switch_var_id, covers_all_values),
       value(value),
       generator_for_value(move(generator_for_value)) {
 }
 
+OperatorID GeneratorSwitchSingle::generate_min_applicable_op(
+        const vector<int> &state,
+        bool reject_unassigned) const {
+    int val = state[switch_var_id];
+    if ((val == PartialAssignment::UNASSIGNED && (!reject_unassigned || covers_all_values)) ||
+         value == val) {
+        return generator_for_value->generate_min_applicable_op(state, reject_unassigned);
+    }
+    return OperatorID(-1);
+}
 void GeneratorSwitchSingle::generate_applicable_ops(
     const vector<int> &state, vector<OperatorID> &applicable_ops) const {
     if (value == state[switch_var_id]) {
@@ -149,6 +291,11 @@ void GeneratorSwitchSingle::generate_applicable_ops(
 
 GeneratorLeafVector::GeneratorLeafVector(vector<OperatorID> &&applicable_operators)
     : applicable_operators(move(applicable_operators)) {
+}
+
+OperatorID GeneratorLeafVector::generate_min_applicable_op(
+        const vector<int> &, bool) const {
+    return (applicable_operators.empty()) ? OperatorID(-1): applicable_operators.back();
 }
 
 void GeneratorLeafVector::generate_applicable_ops(
@@ -169,6 +316,10 @@ GeneratorLeafSingle::GeneratorLeafSingle(OperatorID applicable_operator)
     : applicable_operator(applicable_operator) {
 }
 
+OperatorID GeneratorLeafSingle::generate_min_applicable_op(
+        const vector<int> &, bool) const {
+    return applicable_operator;
+}
 void GeneratorLeafSingle::generate_applicable_ops(
     const vector<int> &, vector<OperatorID> &applicable_ops) const {
     applicable_ops.push_back(applicable_operator);

@@ -1,7 +1,7 @@
 #ifndef TASK_UTILS_SAMPLING_TECHNIQUE_H
 #define TASK_UTILS_SAMPLING_TECHNIQUE_H
 
-//#include "regression_task_proxy.h"
+#include "regression_task_proxy.h"
 #include "sampling.h"
 
 #include "../abstract_task.h"
@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-//class PartialAssignment;
+class PartialAssignment;
 
 namespace sampling_technique {
 extern std::shared_ptr<AbstractTask> modified_task;
@@ -150,43 +150,42 @@ public:
     const static std::string name;
 };
 
-//
-//class TechniqueGBackwardNone : public SamplingTechnique {
-//protected:
-//    std::shared_ptr<utils::DiscreteDistribution> steps;
-//    const bool wrap_partial_assignment;
-//    const bool deprioritize_undoing_steps;
-//    const bool is_valid_walk;
-//    const options::ParseTree bias_evaluator_tree;
-//    const bool bias_probabilistic;
-//    const double bias_adapt;
-//    utils::HashMap<PartialAssignment, int> cache;
-//    std::shared_ptr<Heuristic> bias = nullptr;
-//    const int bias_reload_frequency;
-//    int bias_reload_counter;
-//    std::shared_ptr<StateRegistry> state_registry = nullptr;
-//    std::shared_ptr<AbstractTask> last_partial_wrap_task = nullptr;
-//    std::shared_ptr<RegressionTaskProxy> regression_task_proxy = nullptr;
-//    std::shared_ptr<sampling::RandomRegressionWalkSampler> rrws = nullptr;
-//
-//    virtual std::shared_ptr<AbstractTask> create_next(
-//        std::shared_ptr<AbstractTask> seed_task,
-//        const TaskProxy &task_proxy) override;
-//
-//    virtual void do_upgrade_parameters() override ;
-//
-//public:
-//    explicit TechniqueGBackwardNone(const options::Options &opts);
-//    virtual ~TechniqueGBackwardNone() override = default;
-//
-//    PartialAssignment create_next_initial(
-//            std::shared_ptr<AbstractTask> seed_task,
-//            const TaskProxy &task_proxy);
-//    virtual void dump_upgradable_parameters(std::ostream &stream) const override;
-//
-//    virtual const std::string &get_name() const override;
-//    const static std::string name;
-//};
+class TechniqueGBackwardNone : public SamplingTechnique {
+protected:
+    std::shared_ptr<utils::DiscreteDistribution> steps;
+    const bool wrap_partial_assignment;
+    const bool deprioritize_undoing_steps;
+    const bool is_valid_walk;
+    const options::ParseTree bias_evaluator_tree;
+    const bool bias_probabilistic;
+    const double bias_adapt;
+    utils::HashMap<PartialAssignment, int> cache;
+    std::shared_ptr<Heuristic> bias = nullptr;
+    const int bias_reload_frequency;
+    int bias_reload_counter;
+    std::shared_ptr<StateRegistry> state_registry = nullptr;
+    std::shared_ptr<AbstractTask> last_partial_wrap_task = nullptr;
+    std::shared_ptr<RegressionTaskProxy> regression_task_proxy = nullptr;
+    std::shared_ptr<sampling::RandomRegressionWalkSampler> rrws = nullptr;
+
+    virtual std::shared_ptr<AbstractTask> create_next(
+        std::shared_ptr<AbstractTask> seed_task,
+        const TaskProxy &task_proxy) override;
+
+    virtual void do_upgrade_parameters() override ;
+
+public:
+    explicit TechniqueGBackwardNone(const options::Options &opts);
+    virtual ~TechniqueGBackwardNone() override = default;
+
+    PartialAssignment create_next_initial(
+            std::shared_ptr<AbstractTask> seed_task,
+            const TaskProxy &task_proxy);
+    virtual void dump_upgradable_parameters(std::ostream &stream) const override;
+
+    virtual const std::string &get_name() const override;
+    const static std::string name;
+};
 //
 //class TechniqueUniformNone : public SamplingTechnique {
 //protected:

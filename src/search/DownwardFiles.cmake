@@ -590,6 +590,7 @@ fast_downward_plugin(
         tasks/modified_goals_task
         tasks/modified_init_goals_task
         tasks/modified_operator_costs_task
+        tasks/partial_state_wrapper_task
     DEPENDS TASK_PROPERTIES
     DEPENDENCY_ONLY
 )
@@ -601,13 +602,23 @@ fast_downward_plugin(
         task_utils/causal_graph
     DEPENDENCY_ONLY
 )
+fast_downward_plugin(
+    NAME REGRESSION
+    HELP "Tools for regression"
+    SOURCES
+        task_utils/regression_task_proxy
+        task_utils/predecessor_generator
+        task_utils/predecessor_generator_factory
+    DEPENDS TASK_PROPERTIES SUCCESSOR_GENERATOR
+    DEPENDENCY_ONLY
+)
 
 fast_downward_plugin(
     NAME SAMPLING_TECHNIQUES
     HELP "Sampling Techniques"
     SOURCES
         task_utils/sampling_technique
-    DEPENDS SAMPLING EXTRA_TASKS TASK_PROPERTIES
+    DEPENDS SAMPLING EXTRA_TASKS TASK_PROPERTIES REGRESSION
     DEPENDENCY_ONLY
 )
 
