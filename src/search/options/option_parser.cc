@@ -62,17 +62,23 @@ void OptionParser::check_bounds<double>(
 
 
 
-static ParseTree generate_parse_tree(const string &config) {
+ParseTree generate_parse_tree(const string &config) {
     ParseTree tree;
     ParseTree::sibling_iterator pseudoroot =
         tree.insert(tree.begin(), ParseNode("pseudoroot", ""));
     ParseTree::sibling_iterator cur_node = pseudoroot;
+    bool pre_space = true;
+    int last_c = 0;
+    int last_w = 0;
     string buffer;
     string key;
     for (size_t i = 0; i < config.size(); ++i) {
         char next = config.at(i);
         if ((next == '(' || next == ')' || next == ',') && !buffer.empty()) {
-            tree.append_child(cur_node, ParseNode(buffer, key));
+            tree.append_child(cur_node, ParseNode(buffer.substr(0, last_c), key));
+            pre_space = true;
+            last_c = 0;
+            last_w = 0;
             buffer.clear();
             key.clear();
         } else if (next == '(' && buffer.empty()) {
@@ -80,6 +86,10 @@ static ParseTree generate_parse_tree(const string &config) {
         }
         switch (next) {
         case ' ':
+            if (!pre_space) {
+                buffer.push_back(' ');
+                last_w++;
+            }
             break;
         case '(':
             cur_node = last_child(tree, cur_node);
@@ -99,6 +109,9 @@ static ParseTree generate_parse_tree(const string &config) {
         case ']':
             if (!buffer.empty()) {
                 tree.append_child(cur_node, ParseNode(buffer, key));
+                pre_space = true;
+                last_c = 0;
+                last_w = 0;
                 buffer.clear();
                 key.clear();
             }
@@ -112,11 +125,18 @@ static ParseTree generate_parse_tree(const string &config) {
         case '=':
             if (buffer.empty())
                 throw ParseError("expected keyword before =", *cur_node, config.substr(0, i));
-            key = buffer;
+            key = buffer.substr(0, last_c);
+            pre_space = true;
+            last_c = 0;
+            last_w = 0;
             buffer.clear();
             break;
         default:
             buffer.push_back(next);
+            pre_space = false;
+            last_c += last_w + 1;
+            last_w = 0;
+
             break;
         }
     }
@@ -173,6 +193,8 @@ Options OptionParser::parse() {
         last_key = tree_it->key;
     }
     opts.set_unparsed_config(get_unparsed_config());
+    opts.set_registry(&registry);
+    opts.set_predefinitions(&predefinitions);
     return opts;
 }
 
@@ -222,5 +244,28 @@ const Predefinitions &OptionParser::get_predefinitions() const {
 
 const string &OptionParser::get_root_value() const {
     return parse_tree.begin()->value;
+}
+
+//HACK
+string stringify_tree(ParseTree tree) {
+    ostringstream stree;
+    stree << tree.begin()->value;
+    bool first = true;
+    auto last = --end_of_roots_children(tree);
+    for (auto tree_it = first_child_of_root(tree);
+         tree_it != end_of_roots_children(tree);
+         ++tree_it) {
+        if (first) {
+            stree << "(";
+            first = false;
+        }
+        stree << stringify_tree(subtree(tree, tree_it));
+        if (tree_it == last) {
+            stree << ")";
+        } else {
+            stree << ",";
+        }
+    }
+    return stree.str();
 }
 }

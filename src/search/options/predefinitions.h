@@ -19,8 +19,8 @@ public:
     Predefinitions() = default;
 
     template<typename T>
-    void predefine(const std::string &key, T object) {
-        if (predefined.count(key)) {
+    void predefine(const std::string &key, T object, bool redefine) {
+        if (!redefine && predefined.count(key)) {
             throw OptionParserError(key + " is already used in a predefinition.");
         }
         predefined.emplace(key, std::make_pair(std::type_index(typeid(T)), object));

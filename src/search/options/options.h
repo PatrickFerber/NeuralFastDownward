@@ -12,11 +12,17 @@
 #include <unordered_map>
 
 namespace options {
+class Registry;
+class Predefinitions;
+
 // Wrapper for unordered_map<string, Any>.
 class Options {
     std::unordered_map<std::string, Any> storage;
+    std::unordered_map<std::string, ParseTree> parse_trees;
     std::string unparsed_config;
     const bool help_mode;
+    Registry *registry = nullptr;
+    const Predefinitions *predefinitions = nullptr;
 
 public:
     explicit Options(bool help_mode = false);
@@ -51,6 +57,26 @@ public:
         else
             return default_value;
     }
+    // TODO pat maybe make movable
+    void set_parse_tree(const std::string &key, const ParseTree parse_tree) {
+        parse_trees[key] = parse_tree;
+    }
+
+    const ParseTree &get_parse_tree(const std::string &key) const {
+        const auto it = parse_trees.find(key);
+        if (it == parse_trees.end()) {
+            ABORT("Attempt to retrieve nonexisting parse_tree of name " + key);
+        }
+        return it->second;
+    }
+
+    const ParseTree &get_parse_tree(const std::string &key, const ParseTree &default_value) const {
+        const auto it = parse_trees.find(key);
+        if (it == parse_trees.end()) {
+            return default_value;
+        }
+        return it->second;
+    }
 
     template<typename T>
     void verify_list_non_empty(const std::string &key) const {
@@ -70,6 +96,10 @@ public:
     bool contains(const std::string &key) const;
     const std::string &get_unparsed_config() const;
     void set_unparsed_config(const std::string &config);
+    void set_registry(Registry *registry_);
+    Registry *get_registry() const;
+    void set_predefinitions(const Predefinitions *predefinitions_);
+    const Predefinitions *get_predefinitions() const;
 };
 }
 

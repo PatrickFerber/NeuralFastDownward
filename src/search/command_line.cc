@@ -42,11 +42,10 @@ static int parse_int_arg(const string &name, const string &value) {
 }
 
 static shared_ptr<SearchEngine> parse_cmd_line_aux(
-    const vector<string> &args, options::Registry &registry, bool dry_run) {
+    const vector<string> &args, options::Registry &registry, options::Predefinitions &predefinitions, bool dry_run) {
     string plan_filename = "sas_plan";
     int num_previously_generated_plans = 0;
     bool is_part_of_anytime_portfolio = false;
-    options::Predefinitions predefinitions;
 
     shared_ptr<SearchEngine> engine;
     /*
@@ -129,7 +128,7 @@ static shared_ptr<SearchEngine> parse_cmd_line_aux(
 
 
 shared_ptr<SearchEngine> parse_cmd_line(
-    int argc, const char **argv, options::Registry &registry, bool dry_run, bool is_unit_cost) {
+    int argc, const char **argv, options::Registry &registry, options::Predefinitions &predefinitions, bool dry_run, bool is_unit_cost) {
     vector<string> args;
     bool active = true;
     for (int i = 1; i < argc; ++i) {
@@ -146,7 +145,7 @@ shared_ptr<SearchEngine> parse_cmd_line(
             args.push_back(argv[i]);
         }
     }
-    return parse_cmd_line_aux(args, registry, dry_run);
+    return parse_cmd_line_aux(args, registry, predefinitions, dry_run);
 }
 
 

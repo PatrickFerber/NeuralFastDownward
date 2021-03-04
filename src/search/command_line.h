@@ -7,6 +7,7 @@
 #include <string>
 
 namespace options {
+class Predefinitions;
 class Registry;
 }
 
@@ -21,7 +22,8 @@ public:
 };
 
 extern std::shared_ptr<SearchEngine> parse_cmd_line(
-    int argc, const char **argv, options::Registry &registry, bool dry_run,
+    int argc, const char **argv, options::Registry &registry,
+    options::Predefinitions &predefinitions, bool dry_run,
     bool is_unit_cost);
 
 extern std::string usage(const std::string &progname);

@@ -267,6 +267,17 @@ bool Registry::is_predefinition(const string &key) const {
 void Registry::handle_predefinition(
     const string &key, const string &arg, Predefinitions &predefinitions,
     bool dry_run) {
-    predefinition_functions.at(key)(arg, *this, predefinitions, dry_run);
+    predefinition_functions.at(key)(arg, *this, predefinitions, dry_run, false);
+    predefinitions_raw[key].emplace_back(arg, dry_run);
+}
+void Registry::handle_repredefinition(
+        const string &key, Predefinitions &predefinitions) {
+    if (predefinitions_raw.count(key)){
+        for (auto elem : predefinitions_raw.at(key)) {
+            predefinition_functions.at(key)(
+                    elem.first, *this, predefinitions, elem.second, true);
+        }
+    }
+
 }
 }

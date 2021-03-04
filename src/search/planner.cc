@@ -37,8 +37,9 @@ int main(int argc, const char **argv) {
     // check for simple input errors, and then in normal mode.
     try {
         options::Registry registry(*options::RawRegistry::instance());
-        parse_cmd_line(argc, argv, registry, true, unit_cost);
-        engine = parse_cmd_line(argc, argv, registry, false, unit_cost);
+        options::Predefinitions predefinitions;
+        parse_cmd_line(argc, argv, registry, predefinitions, true, unit_cost);
+        engine = parse_cmd_line(argc, argv, registry, predefinitions, false, unit_cost);
     } catch (const ArgError &error) {
         error.print();
         usage(argv[0]);

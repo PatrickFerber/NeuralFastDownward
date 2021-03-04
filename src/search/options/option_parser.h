@@ -158,6 +158,15 @@ inline T TokenParser<T>::parse(OptionParser &parser) {
     return x;
 }
 
+//HACK
+extern std::string stringify_tree(ParseTree tree);
+
+
+template<>
+inline std::string TokenParser<std::string>::parse(OptionParser &parser) {
+    return stringify_tree(*(parser.get_parse_tree()));
+}
+
 // int needs a specialization to allow "infinity".
 template<>
 inline int TokenParser<int>::parse(OptionParser &parser) {
@@ -336,6 +345,9 @@ void OptionParser::add_option(
             }
         }
     }
+    if (!use_default && arg->value == NONE) {
+        return;
+    }
     std::unique_ptr<OptionParser> subparser =
         use_default ?
         utils::make_unique_ptr<OptionParser>(default_value, registry,
@@ -345,6 +357,7 @@ void OptionParser::add_option(
     T result = TokenParser<T>::parse(*subparser);
     check_bounds<T>(key, result, bounds);
     opts.set<T>(key, result);
+    opts.set_parse_tree(key, *(subparser->get_parse_tree()));
     /* If we have not reached the keyword parameters yet and have not used the
        default value, increment the argument position pointer. */
     if (!use_default && arg->key.empty()) {
@@ -431,7 +444,7 @@ void OptionParser::add_list_option(
 
 template<typename T>
 void predefine_plugin(const std::string &arg, Registry &registry,
-                      Predefinitions &predefinitions, bool dry_run) {
+                      Predefinitions &predefinitions, bool dry_run, bool redefine) {
     std::pair<std::string, std::string> predefinition;
     try {
         predefinition = utils::split(arg, "=");
@@ -446,8 +459,10 @@ void predefine_plugin(const std::string &arg, Registry &registry,
     utils::strip(value);
 
     OptionParser parser(value, registry, predefinitions, dry_run);
-    predefinitions.predefine(key, parser.start_parsing<std::shared_ptr<T>>());
+    predefinitions.predefine(key, parser.start_parsing<std::shared_ptr<T>>(), redefine);
 }
+
+ParseTree generate_parse_tree(const std::string &config);
 }
 
 #endif
