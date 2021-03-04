@@ -34,9 +34,11 @@ enum SearchStatus {IN_PROGRESS, TIMEOUT, FAILED, SOLVED};
 
 class SearchEngine {
     SearchStatus status;
-    bool solution_found;
     Plan plan;
+    StateID goal_id = StateID::no_state;
 protected:
+    bool solution_found;
+
     // Hold a reference to the task implementation and pass it to objects that need it.
     const std::shared_ptr<AbstractTask> task;
     // Use task_proxy to access task information.
@@ -48,6 +50,7 @@ protected:
     SearchSpace search_space;
     SearchProgress search_progress;
     SearchStatistics statistics;
+    const double statistics_interval;
     int bound;
     OperatorCost cost_type;
     bool is_unit_cost;
@@ -64,10 +67,15 @@ public:
     SearchEngine(const options::Options &opts);
     virtual ~SearchEngine();
     virtual void print_statistics() const = 0;
+    virtual void print_timed_statistics() const;
     virtual void save_plan_if_necessary();
     bool found_solution() const;
     SearchStatus get_status() const;
     const Plan &get_plan() const;
+    const State get_goal_state() const;
+    const StateRegistry &get_state_registry() const;
+    const SearchSpace &get_search_space() const;
+    const TaskProxy &get_task_proxy() const;
     void search();
     const SearchStatistics &get_statistics() const {return statistics;}
     void set_bound(int b) {bound = b;}

@@ -106,6 +106,8 @@ public:
     virtual void convert_state_values(
         vector<int> &values,
         const AbstractTask *ancestor_task) const override;
+
+    virtual bool is_undefined(const FactPair &fact) const override;
 };
 
 
@@ -491,6 +493,10 @@ void RootTask::convert_state_values(
     if (this != ancestor_task) {
         ABORT("Invalid state conversion");
     }
+}
+
+bool RootTask::is_undefined(const FactPair &/*fact*/) const {
+    return false;
 }
 
 void read_root_task(istream &in) {

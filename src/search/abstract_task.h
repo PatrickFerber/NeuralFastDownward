@@ -106,6 +106,10 @@ public:
     virtual void convert_state_values(
         std::vector<int> &values,
         const AbstractTask *ancestor_task) const = 0;
+    
+    std::string get_sas() const;
+
+    virtual bool is_undefined(const FactPair &fact) const = 0;
 };
 
 #endif

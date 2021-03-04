@@ -24,8 +24,10 @@ RandomNumberGenerator::RandomNumberGenerator(int seed_) {
     seed(seed_);
 }
 
-RandomNumberGenerator::~RandomNumberGenerator() {
+RandomNumberGenerator::RandomNumberGenerator(std::mt19937 &rng) : rng(rng) {
 }
+
+RandomNumberGenerator::~RandomNumberGenerator() { }
 
 void RandomNumberGenerator::seed(int seed) {
     rng.seed(seed);

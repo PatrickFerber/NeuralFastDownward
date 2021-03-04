@@ -1,6 +1,5 @@
 #include "task_properties.h"
 
-#include "../utils/logging.h"
 #include "../utils/memory.h"
 #include "../utils/system.h"
 
@@ -113,58 +112,6 @@ void print_variable_statistics(const TaskProxy &task_proxy) {
     utils::g_log << "Bytes per state: "
                  << state_packer.get_num_bins() * sizeof(int_packer::IntPacker::Bin)
                  << endl;
-}
-
-void dump_pddl(const State &state) {
-    for (FactProxy fact : state) {
-        string fact_name = fact.get_name();
-        if (fact_name != "<none of those>")
-            utils::g_log << fact_name << endl;
-    }
-}
-
-void dump_fdr(const State &state) {
-    for (FactProxy fact : state) {
-        VariableProxy var = fact.get_variable();
-        utils::g_log << "  #" << var.get_id() << " [" << var.get_name() << "] -> "
-                     << fact.get_value() << endl;
-    }
-}
-
-void dump_goals(const GoalsProxy &goals) {
-    utils::g_log << "Goal conditions:" << endl;
-    for (FactProxy goal : goals) {
-        utils::g_log << "  " << goal.get_variable().get_name() << ": "
-                     << goal.get_value() << endl;
-    }
-}
-
-void dump_task(const TaskProxy &task_proxy) {
-    OperatorsProxy operators = task_proxy.get_operators();
-    int min_action_cost = numeric_limits<int>::max();
-    int max_action_cost = 0;
-    for (OperatorProxy op : operators) {
-        min_action_cost = min(min_action_cost, op.get_cost());
-        max_action_cost = max(max_action_cost, op.get_cost());
-    }
-    utils::g_log << "Min action cost: " << min_action_cost << endl;
-    utils::g_log << "Max action cost: " << max_action_cost << endl;
-
-    VariablesProxy variables = task_proxy.get_variables();
-    utils::g_log << "Variables (" << variables.size() << "):" << endl;
-    for (VariableProxy var : variables) {
-        utils::g_log << "  " << var.get_name()
-                     << " (range " << var.get_domain_size() << ")" << endl;
-        for (int val = 0; val < var.get_domain_size(); ++val) {
-            utils::g_log << "    " << val << ": " << var.get_fact(val).get_name() << endl;
-        }
-    }
-    State initial_state = task_proxy.get_initial_state();
-    utils::g_log << "Initial state (PDDL):" << endl;
-    dump_pddl(initial_state);
-    utils::g_log << "Initial state (FDR):" << endl;
-    dump_fdr(initial_state);
-    dump_goals(task_proxy.get_goals());
 }
 
 PerTaskInformation<int_packer::IntPacker> g_state_packers(

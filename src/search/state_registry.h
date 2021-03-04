@@ -196,6 +196,8 @@ public:
     */
     const State &get_initial_state();
 
+    State insert_state(std::vector<int> &&state);
+
     /*
       Returns the state that results from applying op to predecessor and
       registers it if this was not done before. This is an expensive operation

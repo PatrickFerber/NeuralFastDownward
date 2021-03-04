@@ -31,6 +31,10 @@ void PlanManager::set_plan_filename(const string &plan_filename_) {
     plan_filename = plan_filename_;
 }
 
+const string &PlanManager::get_plan_filename() {
+    return plan_filename;
+}
+
 void PlanManager::set_num_previously_generated_plans(int num_previously_generated_plans_) {
     num_previously_generated_plans = num_previously_generated_plans_;
 }

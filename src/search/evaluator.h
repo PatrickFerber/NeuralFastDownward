@@ -75,6 +75,9 @@ public:
     */
     virtual EvaluationResult compute_result(
         EvaluationContext &eval_context) = 0;
+    
+    virtual std::vector<EvaluationResult> compute_results(
+        std::vector<EvaluationContext> &eval_contexts);
 
     void report_value_for_initial_state(const EvaluationResult &result) const;
     void report_new_minimum_value(const EvaluationResult &result) const;

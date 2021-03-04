@@ -59,6 +59,21 @@ const State &StateRegistry::get_initial_state() {
     return *cached_initial_state;
 }
 
+State StateRegistry::insert_state(std::vector<int>&& state) {
+    int num_bins = get_bins_per_state();
+    unique_ptr<PackedStateBin[]> buffer(new PackedStateBin[num_bins]);
+    // Avoid garbage values in half-full bins.
+    fill_n(buffer.get(), num_bins, 0);
+
+    for (size_t i = 0; i < state.size(); ++i) {
+        state_packer.set(buffer.get(), i, state[i]);
+    }
+    state_data_pool.push_back(buffer.get());
+    // buffer is copied by push_back
+    StateID id = insert_id_or_pop_state();
+    return lookup_state(id);
+ }
+
 //TODO it would be nice to move the actual state creation (and operator application)
 //     out of the StateRegistry. This could for example be done by global functions
 //     operating on state buffers (PackedStateBin *).

@@ -1,6 +1,10 @@
 #ifndef SEARCH_STATISTICS_H
 #define SEARCH_STATISTICS_H
 
+
+#include <limits>
+#include <string>
+
 /*
   This class keeps track of search statistics.
 
@@ -13,8 +17,16 @@ namespace utils {
 enum class Verbosity;
 }
 
+class MaximumExpansionsError {
+    std::string msg;
+public:
+    explicit MaximumExpansionsError(const std::string &msg);
+    void print() const;
+};
+
 class SearchStatistics {
     const utils::Verbosity verbosity;
+    const int maximum_expansions; //Stops search when expanding node maximum_expansions + 1
 
     // General statistics
     int expanded_states;  // no states for which successors were generated
@@ -35,11 +47,11 @@ class SearchStatistics {
 
     void print_f_line() const;
 public:
-    explicit SearchStatistics(utils::Verbosity verbosity);
+    explicit SearchStatistics(utils::Verbosity verbosity, int maximum_expansions = std::numeric_limits<int>::infinity());
     ~SearchStatistics() = default;
 
     // Methods that update statistics.
-    void inc_expanded(int inc = 1) {expanded_states += inc;}
+    void inc_expanded(int inc = 1);
     void inc_evaluated_states(int inc = 1) {evaluated_states += inc;}
     void inc_generated(int inc = 1) {generated_states += inc;}
     void inc_reopened(int inc = 1) {reopened_states += inc;}

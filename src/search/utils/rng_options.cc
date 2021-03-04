@@ -17,13 +17,18 @@ void add_rng_options(options::OptionParser &parser) {
         options::Bounds("-1", "infinity"));
 }
 
+std::mt19937 &get_global_mt19937() {
+    static std::mt19937 twister(2011);
+    return twister;
+}
+
 shared_ptr<RandomNumberGenerator> parse_rng_from_options(
     const options::Options &options) {
     int seed = options.get<int>("random_seed");
     if (seed == -1) {
         // Use an arbitrary default seed.
         static shared_ptr<utils::RandomNumberGenerator> rng =
-            make_shared<utils::RandomNumberGenerator>(2011);
+            make_shared<utils::RandomNumberGenerator>(get_global_mt19937());
         return rng;
     } else {
         return make_shared<RandomNumberGenerator>(seed);

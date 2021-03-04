@@ -100,6 +100,10 @@ vector<int> DelegatingTask::get_initial_state_values() const {
     return parent->get_initial_state_values();
 }
 
+bool DelegatingTask::is_undefined(const FactPair &fact) const {
+    return parent->is_undefined(fact);
+}
+
 void DelegatingTask::convert_state_values(
     vector<int> &values, const AbstractTask *ancestor_task) const {
     if (this == ancestor_task) {

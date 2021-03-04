@@ -17,6 +17,7 @@ public:
     PlanManager();
 
     void set_plan_filename(const std::string &plan_filename);
+    const std::string &get_plan_filename();
     void set_num_previously_generated_plans(int num_previously_generated_plans);
     void set_is_part_of_anytime_portfolio(bool is_part_of_anytime_portfolio);
 

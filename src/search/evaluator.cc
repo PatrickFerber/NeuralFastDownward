@@ -5,6 +5,7 @@
 
 #include "utils/logging.h"
 #include "utils/system.h"
+#include "evaluation_context.h"
 
 #include <cassert>
 
@@ -24,6 +25,17 @@ Evaluator::Evaluator(const string &description,
 bool Evaluator::dead_ends_are_reliable() const {
     return true;
 }
+
+vector<EvaluationResult> Evaluator::compute_results(
+    vector<EvaluationContext>& eval_contexts) {
+    vector<EvaluationResult> eval_results;
+    for (vector<EvaluationContext>::iterator ec = eval_contexts.begin();
+        ec != eval_contexts.end(); ++ec) {
+        eval_results.push_back(compute_result(*ec));
+    }
+    return eval_results;
+}
+
 
 void Evaluator::report_value_for_initial_state(const EvaluationResult &result) const {
     assert(use_for_reporting_minima);

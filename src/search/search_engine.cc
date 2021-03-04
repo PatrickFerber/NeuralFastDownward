@@ -44,13 +44,14 @@ successor_generator::SuccessorGenerator &get_successor_generator(const TaskProxy
 SearchEngine::SearchEngine(const Options &opts)
     : status(IN_PROGRESS),
       solution_found(false),
-      task(tasks::g_root_task),
+      task(opts.get<shared_ptr<AbstractTask>>("transform")),
       task_proxy(*task),
       state_registry(task_proxy),
       successor_generator(get_successor_generator(task_proxy)),
       search_space(state_registry),
       search_progress(opts.get<utils::Verbosity>("verbosity")),
-      statistics(opts.get<utils::Verbosity>("verbosity")),
+      statistics(SearchStatistics(opts.get<utils::Verbosity>("verbosity"), opts.get<int>("max_expansions"))),
+      statistics_interval(opts.get<double>("statistics_interval")),
       cost_type(opts.get<OperatorCost>("cost_type")),
       is_unit_cost(task_properties::is_unit_cost(task_proxy)),
       max_time(opts.get<double>("max_time")),
@@ -66,6 +67,17 @@ SearchEngine::SearchEngine(const Options &opts)
 SearchEngine::~SearchEngine() {
 }
 
+void SearchEngine::print_statistics() const {
+    utils::g_log << "Bytes per state: "
+                 << state_registry.get_state_size_in_bytes() << endl;
+}
+
+void SearchEngine::print_timed_statistics() const {
+    utils::g_log << "[Timed Statistics: ";
+    statistics.print_basic_statistics();
+    utils::g_log << "]" << endl;
+}
+
 bool SearchEngine::found_solution() const {
     return solution_found;
 }
@@ -79,20 +91,50 @@ const Plan &SearchEngine::get_plan() const {
     return plan;
 }
 
+const State SearchEngine::get_goal_state() const {
+    assert(solution_found);
+    return state_registry.lookup_state(goal_id);
+}
+
+
 void SearchEngine::set_plan(const Plan &p) {
     solution_found = true;
     plan = p;
 }
 
+const StateRegistry &SearchEngine::get_state_registry() const {
+    return state_registry;
+}
+
+const SearchSpace &SearchEngine::get_search_space() const {
+    return search_space;
+}
+
+const TaskProxy &SearchEngine::get_task_proxy() const {
+    return task_proxy;
+}
+
 void SearchEngine::search() {
     initialize();
     utils::CountdownTimer timer(max_time);
+    double last_statistic_time  = timer.get_elapsed_time();
     while (status == IN_PROGRESS) {
-        status = step();
+        try {
+            status = step();
+        } catch (MaximumExpansionsError e) {
+            cout << "Maximum number of expansions reached. Abort search."
+                << endl;
+            break;
+        }
         if (timer.is_expired()) {
             utils::g_log << "Time limit reached. Abort search." << endl;
             status = TIMEOUT;
             break;
+        }
+        if(statistics_interval > 0 &&
+           timer.get_elapsed_time() - last_statistic_time > statistics_interval) {
+            print_timed_statistics();
+            last_statistic_time = timer.get_elapsed_time();
         }
     }
     // TODO: Revise when and which search times are logged.
@@ -102,6 +144,7 @@ void SearchEngine::search() {
 bool SearchEngine::check_goal_and_set_plan(const State &state) {
     if (task_properties::is_goal_state(task_proxy, state)) {
         utils::g_log << "Solution found!" << endl;
+        goal_id = state.get_id();
         Plan plan;
         search_space.trace_path(state, plan);
         set_plan(plan);
@@ -150,6 +193,22 @@ void SearchEngine::add_options_to_parser(OptionParser &parser) {
         "just like incomplete search algorithms that exhaust their search space.",
         "infinity");
     utils::add_verbosity_option_to_parser(parser);
+    parser.add_option<int>(
+        "max_expansions",
+        "maximum number of expansions the search is allowed to run for.",
+        "infinity");
+    parser.add_option<double>(
+            "statistics_interval",
+            "Prints every interval seconds some statistics on the search."
+            "Use a negative value to disable. Default: 30",
+            "30"
+            );
+    parser.add_option<shared_ptr<AbstractTask>>(
+        "transform",
+        "Optional task transformation for the search algorithm."
+        " Currently, adapt_costs(), sampling_transform(), and no_transform() are "
+        "available.",
+        "no_transform()");
 }
 
 /* Method doesn't belong here because it's only useful for certain derived classes.

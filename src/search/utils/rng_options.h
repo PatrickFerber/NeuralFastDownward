@@ -2,6 +2,8 @@
 #define UTILS_RNG_OPTIONS_H
 
 #include <memory>
+#include <random>
+
 
 namespace options {
 class OptionParser;
@@ -13,6 +15,9 @@ class RandomNumberGenerator;
 
 // Add random_seed option to parser.
 extern void add_rng_options(options::OptionParser &parser);
+
+//Return a reference to the mersenne twister used by the global RNG.
+extern std::mt19937 &get_global_mt19937();
 
 /*
   Return an RNG based on the given options, which can either be the global

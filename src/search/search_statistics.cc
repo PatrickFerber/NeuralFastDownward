@@ -8,9 +8,24 @@
 
 using namespace std;
 
+MaximumExpansionsError::MaximumExpansionsError(const string &msg)
+    : msg(msg) {
+}
 
-SearchStatistics::SearchStatistics(utils::Verbosity verbosity)
-    : verbosity(verbosity) {
+void MaximumExpansionsError::print() const {
+    cerr << "Maximum number of expansions reached: " << msg << endl;
+}
+
+void SearchStatistics::inc_expanded(int inc){
+    if (expanded_states >= maximum_expansions) {
+        throw MaximumExpansionsError(
+            "Maximum number of expansions reached. Abort search.");
+    }
+    expanded_states += inc;
+}
+
+SearchStatistics::SearchStatistics(utils::Verbosity verbosity, int maximum_expansions)
+    : verbosity(verbosity), maximum_expansions(maximum_expansions) {
     expanded_states = 0;
     reopened_states = 0;
     evaluated_states = 0;

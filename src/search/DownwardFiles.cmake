@@ -109,6 +109,7 @@ fast_downward_plugin(
     SOURCES
         utils/collections
         utils/countdown_timer
+        utils/distribution
         utils/exceptions
         utils/hash
         utils/language
@@ -450,6 +451,28 @@ fast_downward_plugin(
     DEPENDENCY_ONLY
 )
 
+
+fast_downward_plugin(
+    NAME SAMPLING_SEARCH
+    HELP "Sampling search algorithm"
+    SOURCES
+        search_engines/sampling_engine
+        search_engines/sampling_state_engine
+        search_engines/sampling_search
+        search_engines/sampling_v
+        search_engines/sampling_tasks
+    DEPENDS EXTRA_TASKS NULL_PRUNING_METHOD ORDERED_SET SAMPLING_TECHNIQUES
+    DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
+    NAME PLUGIN_SAMPLING_SEARCH
+    HELP "Sampling search plugin"
+    SOURCES
+        search_engines/plugin_sampling
+    DEPENDS SAMPLING_SEARCH SEARCH_COMMON
+)
+
 fast_downward_plugin(
     NAME LP_SOLVER
     HELP "Interface to an LP solver"
@@ -565,6 +588,7 @@ fast_downward_plugin(
         tasks/domain_abstracted_task
         tasks/domain_abstracted_task_factory
         tasks/modified_goals_task
+        tasks/modified_init_goals_task
         tasks/modified_operator_costs_task
     DEPENDS TASK_PROPERTIES
     DEPENDENCY_ONLY
@@ -575,6 +599,15 @@ fast_downward_plugin(
     HELP "Causal Graph"
     SOURCES
         task_utils/causal_graph
+    DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
+    NAME SAMPLING_TECHNIQUES
+    HELP "Sampling Techniques"
+    SOURCES
+        task_utils/sampling_technique
+    DEPENDS SAMPLING EXTRA_TASKS TASK_PROPERTIES
     DEPENDENCY_ONLY
 )
 

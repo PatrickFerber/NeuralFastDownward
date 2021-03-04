@@ -6,6 +6,7 @@
 #include <functional>
 #include <memory>
 
+class PartialAssignment;
 class State;
 
 namespace successor_generator {
@@ -16,7 +17,11 @@ namespace utils {
 class RandomNumberGenerator;
 }
 
-using DeadEndDetector = std::function<bool (State)>;
+using DeadEndDetector = std::function<bool (State &)>;
+using PartialDeadEndDetector = std::function<bool (PartialAssignment &)>;
+using ValidStateDetector = std::function<bool (PartialAssignment &)>;
+using PartialAssignmentBias = std::function<int (PartialAssignment &)>;
+using StateBias = std::function<int (State &)>;
 
 namespace sampling {
 /*
@@ -49,7 +54,23 @@ public:
     State sample_state(
         int init_h,
         const DeadEndDetector &is_dead_end = [](const State &) {return false;}) const;
+
+    State sample_state_length(
+        const State &init_state,
+        int length,
+        const DeadEndDetector &is_dead_end = [](const State &) {return false;},
+        bool deprioritize_undoing_steps = false,
+        const StateBias *bias = nullptr,
+        bool probabilistic_bias=true,
+        double adapt_bias=-1
+        ) const;
+
+    std::vector<State> sample_states(
+        int num_samples,
+        int init_h,
+        const DeadEndDetector &is_dead_end = [](const State &) {return false;}) const;
 };
+
 }
 
 #endif

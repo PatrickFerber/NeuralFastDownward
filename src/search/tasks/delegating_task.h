@@ -56,6 +56,8 @@ public:
 
     virtual std::vector<int> get_initial_state_values() const override;
 
+    virtual bool is_undefined(const FactPair &fact) const override;
+
     virtual void convert_state_values(
         std::vector<int> &values,
         const AbstractTask *ancestor_task) const final override;
