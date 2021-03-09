@@ -33,10 +33,8 @@ bool sample_next_state(
 
     pre_previous_state = move(previous_state);
     previous_state = move(current_state);
-    cout << "D" << endl;
     vector<OperatorID> applicable_operators;
     generator.generate_applicable_ops(previous_state, applicable_operators);
-    cout << "E" << endl;
     // If there are no applicable operators, do not walk further.
     if (applicable_operators.empty()) {
         current_state = move(previous_state);

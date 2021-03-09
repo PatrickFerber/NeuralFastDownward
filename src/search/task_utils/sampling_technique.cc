@@ -814,58 +814,59 @@ static Plugin<SamplingTechnique> _plugin_technique_gbackward_none(
 //        TechniqueGBackwardNone::name, _parse_technique_gbackward_none, "", false);
 
 
-///* START DEFINITION TECHNIQUE_UNIFORM_NONE */
-//const std::string TechniqueUniformNone::name = "uniform_none";
-//
-//const string &TechniqueUniformNone::get_name() const {
-//    return name;
-//}
-//
-//TechniqueUniformNone::TechniqueUniformNone(const options::Options &opts)
-//    : SamplingTechnique(opts) { }
-//
-//std::shared_ptr<AbstractTask> TechniqueUniformNone::create_next(
-//    shared_ptr<AbstractTask> seed_task, const TaskProxy &) {
-//    TaskProxy seed_task_proxy(*seed_task);
-//    while (true) {
-//        auto state =seed_task_proxy.create_empty_assignment().get_full_state(
-//                check_mutexes, *rng);
-//        if (state.first) {
-//            return make_shared<extra_tasks::ModifiedInitGoalsTask>(
-//                    seed_task, move(state.second.get_values()), extractGoalFacts(seed_task_proxy.get_goals()));
-//        }
-//    }
-//}
-//
-///* PARSING TECHNIQUE_UNIFORM_NONE*/
-//static shared_ptr<SamplingTechnique> _parse_technique_uniform_none(
-//    OptionParser &parser) {
-//    SamplingTechnique::add_options_to_parser(parser);
-//
-//
-//    Options opts = parser.parse();
-//
-//    shared_ptr<TechniqueUniformNone> technique;
-//    if (!parser.dry_run()) {
-//        technique = make_shared<TechniqueUniformNone>(opts);
-//    }
-//    return technique;
-//}
-//
-//static Plugin<SamplingTechnique> _plugin_technique_uniform_none(
-//    TechniqueUniformNone::name, _parse_technique_uniform_none);
-//
-//
-//static PluginTypePlugin<SamplingTechnique> _type_plugin(
-//    "SamplingTechnique",
-//    "Objects to modify the given task.");
-//
-//static PluginTypePlugin<TechniqueGBackwardNone> _type_plugin_gbackward_none(
-//        "GBackwardNone",
-//        "Object to modify the given task.");
+/* START DEFINITION TECHNIQUE_UNIFORM_NONE */
+const std::string TechniqueUniformNone::name = "uniform_none";
 
-    static PluginTypePlugin<SamplingTechnique> _type_plugin(
-            "SamplingTechnique",
-            "Generates from a given task a new one.");
+const string &TechniqueUniformNone::get_name() const {
+    return name;
+}
+
+TechniqueUniformNone::TechniqueUniformNone(const options::Options &opts)
+    : SamplingTechnique(opts) { }
+
+std::shared_ptr<AbstractTask> TechniqueUniformNone::create_next(
+    shared_ptr<AbstractTask> seed_task, const TaskProxy &) {
+    TaskProxy seed_task_proxy(*seed_task);
+    int c = 0;
+    while (true) {
+        vector<int> unassigned(
+                seed_task->get_num_variables(), PartialAssignment::UNASSIGNED);
+        auto state = PartialAssignment(*seed_task, move(unassigned))
+                .get_full_state(check_mutexes, *rng);
+        if (state.first) {
+            return make_shared<extra_tasks::ModifiedInitGoalsTask>(
+                    seed_task, move(state.second.get_values()), extractGoalFacts(seed_task_proxy.get_goals()));
+        } else {
+            c++;
+        }
+    }
+}
+
+/* PARSING TECHNIQUE_UNIFORM_NONE*/
+static shared_ptr<SamplingTechnique> _parse_technique_uniform_none(
+    OptionParser &parser) {
+    SamplingTechnique::add_options_to_parser(parser);
+
+
+    Options opts = parser.parse();
+
+    shared_ptr<TechniqueUniformNone> technique;
+    if (!parser.dry_run()) {
+        technique = make_shared<TechniqueUniformNone>(opts);
+    }
+    return technique;
+}
+
+static Plugin<SamplingTechnique> _plugin_technique_uniform_none(
+    TechniqueUniformNone::name, _parse_technique_uniform_none);
+
+
+static PluginTypePlugin<TechniqueGBackwardNone> _type_plugin_gbackward_none(
+        "GBackwardNone",
+        "Object to modify the given task.");
+
+static PluginTypePlugin<SamplingTechnique> _type_plugin(
+        "SamplingTechnique",
+        "Generates from a given task a new one.");
 }
 
