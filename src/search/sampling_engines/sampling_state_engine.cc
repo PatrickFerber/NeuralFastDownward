@@ -1,22 +1,11 @@
 #include "sampling_state_engine.h"
 
-#include "../evaluation_context.h"
-#include "../heuristic.h"
+#include "../option_parser.h"
 
-#include "../algorithms/ordered_set.h"
-#include "../task_utils/successor_generator.h"
 #include "../task_utils/task_properties.h"
-//#include "../task_utils/predecessor_generator.h"
 
-#include <cassert>
-#include <fstream>
 #include <iostream>
-#include <set>
-#include <memory>
-#include <numeric>
-#include <stdio.h>
 #include <string>
-
 
 using namespace std;
 
@@ -26,13 +15,11 @@ namespace sampling_engine {
    (as everybody can access it, be certain who does and how) */
 std::vector<Path> paths;
 
-Path::Path(StateID start) {
+Path::Path(const StateID &start) {
     trajectory.push_back(start);
 }
 
-Path::~Path() { }
-
-void Path::add(OperatorID op, StateID next) {
+void Path::add(const OperatorID &op, const StateID &next) {
     plan.push_back(op);
     trajectory.push_back(next);
 }
@@ -66,11 +53,13 @@ StateFormat select_state_format(const string &state_format) {
 }
 
 
-SamplingStateEngine::SamplingStateEngine(const Options &opts)
+SamplingStateEngine::SamplingStateEngine(const options::Options &opts)
     : SamplingEngine(opts),
       skip_undefined_facts(opts.get<bool>("skip_undefined_facts")),
-      sample_format(select_sample_format(opts.get<string>("sample_format"))),
-      state_format(select_state_format(opts.get<string>("state_format"))),
+      sample_format(select_sample_format(
+              opts.get<string>("sample_format"))),
+      state_format(select_state_format(
+              opts.get<string>("state_format"))),
       field_separator(opts.get<string>("field_separator")),
       state_separator(opts.get<string>("state_separator")) {
     if (max_sample_cache_size <= 0) {
@@ -177,7 +166,7 @@ void SamplingStateEngine::convert_and_push_goal(
 }
 
 void SamplingStateEngine::add_sampling_state_options(
-        OptionParser &parser,
+        options::OptionParser &parser,
         const string &default_sample_format,
         const string &default_state_format,
         const std::string &default_field_separator,

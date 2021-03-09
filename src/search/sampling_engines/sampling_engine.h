@@ -1,7 +1,6 @@
 #ifndef SEARCH_ENGINES_SAMPLING_ENGINE_H
 #define SEARCH_ENGINES_SAMPLING_ENGINE_H
 
-#include "../open_list.h"
 #include "../search_engine.h"
 
 #include "../sampling_techniques/sampling_technique.h"
@@ -31,10 +30,10 @@ protected:
     int index_sample_files;
     const int max_sample_files;
     int count_sample_files;
-    const std::vector<std::shared_ptr<sampling_technique::SamplingTechnique>> sampling_techniques;
-
-    std::vector<std::shared_ptr<sampling_technique::SamplingTechnique>>::const_iterator current_technique;
-
+    const std::vector<std::shared_ptr<
+        sampling_technique::SamplingTechnique>>sampling_techniques;
+    std::vector<std::shared_ptr<
+        sampling_technique::SamplingTechnique>>::const_iterator current_technique;
 
     std::shared_ptr<utils::RandomNumberGenerator> rng;
     std::size_t sample_cache_size = 0;

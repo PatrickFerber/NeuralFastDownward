@@ -3,9 +3,8 @@
 
 #include "sampling_state_engine.h"
 
-#include "../open_list.h"
-
-#include "../sampling_techniques/sampling_technique.h"
+#include "../options/predefinitions.h"
+#include "../options/registries.h"
 
 #include <deque>
 #include <functional>
@@ -22,18 +21,11 @@ class PruningMethod;
 namespace options {
 class Options;
 struct ParseNode;
-class Predefinitions;
-class Registry;
 using ParseTree = tree<ParseNode>;
 }
 
 
 namespace sampling_engine {
-
-enum SampleType {
-    TRAJECTORY_SOLUTION, TRAJECTORY_OTHER, STATE_OTHER
-};
-
 
 class SamplingSearch : public SamplingStateEngine {
 protected:
@@ -77,7 +69,6 @@ protected:
     void next_engine();
     void update_solved_log(std::vector<std::string> &samples);
     std::vector<std::string> extract_samples();
-    std::string extract_modification_hash(State init, GoalsProxy goals) const;
     std::string construct_meta(
             size_t modification_hash,
             const std::string &sample_type,
@@ -110,7 +101,7 @@ protected:
 
 public:
     explicit SamplingSearch(const options::Options &opts);
-    virtual ~SamplingSearch() = default;
+    virtual ~SamplingSearch() override = default;
 
     static void add_sampling_search_options(options::OptionParser &parser);
 };

@@ -1,20 +1,16 @@
 #include "sampling_engine.h"
 
-#include "../evaluation_context.h"
-#include "../heuristic.h"
+#include "../option_parser.h"
 
-#include "../algorithms/ordered_set.h"
-#include "../task_utils/successor_generator.h"
-#include "../task_utils/task_properties.h"
-//#include "../task_utils/predecessor_generator.h"
+#include "../sampling_techniques/technique_null.h"
 
 #include <cassert>
 #include <fstream>
 #include <iostream>
-#include <set>
 #include <memory>
 #include <numeric>
-#include <stdio.h>
+#include <set>
+#include <cstdio>
 #include <string>
 
 
@@ -36,7 +32,7 @@ prepare_sampling_techniques(
     return input;
 }
 
-SamplingEngine::SamplingEngine(const Options &opts)
+SamplingEngine::SamplingEngine(const options::Options &opts)
     : SearchEngine(opts),
       shuffle_sampling_techniques(opts.get<bool>("shuffle_techniques")),
       max_sample_cache_size(opts.get<int>("sample_cache_size")),
@@ -84,7 +80,8 @@ void SamplingEngine::update_current_technique() {
             return;
         }
         int chosen = (*rng)(total_remaining);
-        for (auto iter = sampling_techniques.begin(); iter != sampling_techniques.end(); ++iter){
+        for (auto iter = sampling_techniques.begin();
+                iter != sampling_techniques.end(); ++iter){
             int remaining = (*iter)->get_count() - (*iter)->get_counter();
             if (chosen < remaining) {
                 current_technique = iter;
@@ -172,13 +169,13 @@ void SamplingEngine::save_plan_if_necessary() {
         sample_cache.erase(
             sample_cache.begin(),
             sample_cache.begin() + idx_vector + 
-                ((sample_cache[idx_vector].size() == 0) ? 1 : 0));
+                ((sample_cache[idx_vector].empty()) ? 1 : 0));
         sample_cache_size -= nb_samples;
         count_sample_files++;
     }
 }
 
-void SamplingEngine::add_sampling_options(OptionParser &parser) {
+void SamplingEngine::add_sampling_options(options::OptionParser &parser) {
     parser.add_list_option<shared_ptr < 
         sampling_technique::SamplingTechnique >> (
         "techniques",

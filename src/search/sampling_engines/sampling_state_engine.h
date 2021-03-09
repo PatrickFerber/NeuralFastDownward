@@ -24,16 +24,17 @@ protected:
     Trajectory trajectory;
     Plan plan;
 public:
-    explicit Path(StateID start);
+    explicit Path(const StateID &start);
     Path(const Path &) = delete;
-    ~Path();
+    ~Path() = default;
 
-    void add(OperatorID op, StateID next);
+    void add(const OperatorID &op, const StateID &next);
 
     const Trajectory &get_trajectory() const;
     const Plan &get_plan() const;
 };
 extern std::vector<Path> paths;
+
 
 enum SampleFormat {
     CSV,
@@ -46,7 +47,6 @@ enum StateFormat {
 };
 
 
-
 class SamplingStateEngine : public SamplingEngine {
 protected:
     const bool skip_undefined_facts;
@@ -57,8 +57,6 @@ protected:
     const std::string state_separator;
 
 
-    virtual std::vector<std::string> sample(
-        std::shared_ptr<AbstractTask> task) = 0;
     virtual std::string sample_file_header() const override;
 
     void convert_and_push_state(
@@ -69,7 +67,7 @@ protected:
 
 public:
     explicit SamplingStateEngine(const options::Options &opts);
-    virtual ~SamplingStateEngine() = default;
+    virtual ~SamplingStateEngine() override  = default;
 
 
     static void add_sampling_state_options(

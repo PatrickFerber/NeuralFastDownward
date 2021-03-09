@@ -1,26 +1,23 @@
 #include "sampling_v.h"
 
+#include "../evaluator.h"
 #include "../evaluation_context.h"
-#include "../heuristic.h"
-#include "../plugin.h"
+#include "../option_parser.h"
 
-#include "../algorithms/ordered_set.h"
 #include "../task_utils/successor_generator.h"
 #include "../task_utils/task_properties.h"
-//#include "../task_utils/assignment_cost_generator.h"
 
 #include <cassert>
-#include <cstdlib>
 #include <iostream>
-#include <set>
 #include <memory>
+#include <set>
 #include <string>
 
 using namespace std;
 
 namespace sampling_engine {
 
-StateTree::StateTree(const StateID state_id, const int parent, const int action_cost, double value)
+StateTree::StateTree(const StateID &state_id, const int parent, const int action_cost, double value)
 : state_id(state_id),
 parent(parent),
 action_cost(action_cost),
@@ -38,7 +35,7 @@ options::ParseTree prepare_evaluator_parse_tree(
 
 
 /* Constructor */
-SamplingV::SamplingV(const Options &opts)
+SamplingV::SamplingV(const options::Options &opts)
     : SamplingStateEngine(opts),
       evaluator_parse_tree(prepare_evaluator_parse_tree(opts.get_unparsed_config())),
       registry(*opts.get_registry()),
@@ -79,17 +76,17 @@ void SamplingV::initialize() {
 }
 
 void SamplingV::reload_evaluator(shared_ptr<AbstractTask> task) {
-    sampling_technique::modified_task = task;
+    sampling_technique::modified_task = move(task);
     registry.handle_repredefinition("evaluator", predefinitions);
     registry.handle_repredefinition("heuristic", predefinitions);
 
-    OptionParser evaluator_parser(
+    options::OptionParser evaluator_parser(
         evaluator_parse_tree, registry, predefinitions, false);
     qevaluator = evaluator_parser.start_parsing<shared_ptr < Evaluator >> ();
 }
 
 void SamplingV::reload_task(shared_ptr<AbstractTask> task) {
-    q_task = task;
+    q_task = move(task);
     q_task_proxy = make_shared<TaskProxy>(*q_task);
     q_state_registry = make_shared<StateRegistry>(*q_task_proxy);
     assert(task_properties::is_unit_cost(*q_task_proxy));
@@ -268,7 +265,7 @@ vector<string> SamplingV::sample(shared_ptr<AbstractTask> task) {
 }
 
 
-void SamplingV::add_sampling_v_options(OptionParser &parser) {
+void SamplingV::add_sampling_v_options(options::OptionParser &parser) {
     parser.add_option<shared_ptr < Evaluator >> (
         "vevaluator", "evaluator to use to estimate the v values");
     parser.add_option<int> (

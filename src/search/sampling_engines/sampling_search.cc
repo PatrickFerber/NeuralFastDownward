@@ -1,19 +1,17 @@
 #include "sampling_search.h"
 
+#include "../evaluator.h"
 #include "../evaluation_context.h"
 #include "../heuristic.h"
 #include "../plugin.h"
 
-#include "../algorithms/ordered_set.h"
-//#include "../options/command_line.h"
 #include "../task_utils/successor_generator.h"
 #include "../task_utils/task_properties.h"
 
 #include <algorithm>
-#include <cstdlib>
 #include <iostream>
-#include <set>
 #include <memory>
+#include <set>
 #include <string>
 
 using namespace std;
@@ -306,7 +304,7 @@ string construct_meta_heuristics(const vector<string> &use_evaluators) {
 }
 
 /* Constructor */
-SamplingSearch::SamplingSearch(const Options &opts)
+SamplingSearch::SamplingSearch(const options::Options &opts)
     : SamplingStateEngine(opts),
       search_parse_tree(prepare_search_parse_tree(opts.get_unparsed_config())),
       registry(*opts.get_registry()),
@@ -349,7 +347,7 @@ SamplingSearch::SamplingSearch(const Options &opts)
         cerr << "invalid state format for sampling_search" << endl;
         utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
     }
-    for (auto st: sampling_techniques) {
+    for (auto &st: sampling_techniques) {
         successfully_solved[st->id] = 0;
         successfully_solved_history[st->id] = deque<bool>();
     }
@@ -391,7 +389,7 @@ void SamplingSearch::next_engine() {
         ptr_use_evaluators.push_back(
             predefinitions.get<shared_ptr<Evaluator>>(name));
     }
-    OptionParser engine_parser(
+    options::OptionParser engine_parser(
         search_parse_tree, registry, predefinitions, false);
     engine = engine_parser.start_parsing<shared_ptr < SearchEngine >> ();
 }
@@ -527,7 +525,7 @@ std::string SamplingSearch::sample_file_header() const {
     return constructed_sample_file_header;
 }
 
-void SamplingSearch::add_sampling_search_options(OptionParser &parser) {
+void SamplingSearch::add_sampling_search_options(options::OptionParser &parser) {
     parser.add_option<shared_ptr < SearchEngine >> (
             "search",
             "Search engine to use for sampling");

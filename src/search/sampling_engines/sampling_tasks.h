@@ -3,10 +3,6 @@
 
 #include "sampling_engine.h"
 
-#include "../open_list.h"
-#include "../sampling_techniques/sampling_technique.h"
-#include "../utils/hash.h"
-
 #include <functional>
 #include <memory>
 #include <ostream>
@@ -26,7 +22,7 @@ protected:
     virtual std::string sample_file_header() const override;
 public:
     explicit SamplingTasks(const options::Options &opts);
-    virtual ~SamplingTasks() = default;
+    virtual ~SamplingTasks() override = default;
 };
 }
 #endif
