@@ -1,7 +1,7 @@
 #include "sampling_technique.h"
 
-#include "sampling.h"
-#include "successor_generator.h"
+#include "../task_utils//sampling.h"
+#include "../task_utils/successor_generator.h"
 
 #include "../evaluation_context.h"
 #include "../evaluation_result.h"

@@ -3,7 +3,7 @@
 #include "sampling_v.h"
 #include "sampling_search.h"
 #include "sampling_tasks.h"
-#include "search_common.h"
+#include "../search_engines/search_common.h"
 
 #include "../option_parser.h"
 #include "../plugin.h"

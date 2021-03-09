@@ -4,7 +4,7 @@
 #include "sampling_engine.h"
 
 #include "../open_list.h"
-#include "../task_utils/sampling_technique.h"
+#include "../sampling_techniques/sampling_technique.h"
 #include "../utils/hash.h"
 
 #include <functional>

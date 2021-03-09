@@ -4,7 +4,7 @@
 #include "../open_list.h"
 #include "../search_engine.h"
 
-#include "../task_utils/sampling_technique.h"
+#include "../sampling_techniques/sampling_technique.h"
 
 #include <functional>
 #include <memory>

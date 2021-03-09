@@ -1,8 +1,8 @@
 #ifndef TASK_UTILS_SAMPLING_TECHNIQUE_H
 #define TASK_UTILS_SAMPLING_TECHNIQUE_H
 
-#include "regression_task_proxy.h"
-#include "sampling.h"
+#include "../task_utils/regression_task_proxy.h"
+#include "../task_utils/sampling.h"
 
 #include "../abstract_task.h"
 #include "../option_parser.h"

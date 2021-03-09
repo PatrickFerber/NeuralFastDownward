@@ -5,7 +5,7 @@
 
 #include "../open_list.h"
 
-#include "../task_utils/sampling_technique.h"
+#include "../sampling_techniques/sampling_technique.h"
 
 #include <deque>
 #include <functional>
