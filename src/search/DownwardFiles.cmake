@@ -461,6 +461,7 @@ fast_downward_plugin(
         sampling_engines/sampling_search
         sampling_engines/sampling_v
         sampling_engines/sampling_tasks
+        sampling_engines/plugin_sampling.cc
     DEPENDS EXTRA_TASKS NULL_PRUNING_METHOD ORDERED_SET SAMPLING_TECHNIQUES
     DEPENDENCY_ONLY
 )
@@ -617,6 +618,11 @@ fast_downward_plugin(
     NAME SAMPLING_TECHNIQUES
     HELP "Sampling Techniques"
     SOURCES
+        sampling_techniques/technique_gbackward_none
+        sampling_techniques/technique_iforward_none
+        sampling_techniques/technique_uniform_none
+        sampling_techniques/technique_null
+        sampling_techniques/technique_none_none
         sampling_techniques/sampling_technique
     DEPENDS SAMPLING EXTRA_TASKS TASK_PROPERTIES REGRESSION
     DEPENDENCY_ONLY
