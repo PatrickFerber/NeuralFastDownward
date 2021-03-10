@@ -7,6 +7,5 @@
 /misc/.tox/
 /misc/autodoc/downward-xmlrpc.secret
 /output.sas
-/sas_plan
-/sas_plan.*
+/sas_plan*
 __pycache__/
