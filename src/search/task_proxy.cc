@@ -15,12 +15,12 @@ const int PartialAssignment::UNASSIGNED = -1;
 PartialAssignment::PartialAssignment(const AbstractTask &task)  : task(&task), values(nullptr) {}
 PartialAssignment::PartialAssignment(const AbstractTask &task, vector<int> &&values)
         : task(&task), values(make_shared<vector<int>>(move(values))) {
-    assert(static_cast<int>(values.size()) == task.get_num_variables());
+    assert(static_cast<int>(this->values->size()) == task.get_num_variables());
 }
 
 PartialAssignment::PartialAssignment(const PartialAssignment &assignment, vector<int> &&values)
         : task(assignment.task), values(make_shared<vector<int>>(move(values))) {
-    assert(static_cast<int>(values.size()) == task->get_num_variables());
+    assert(static_cast<int>(this->values->size()) == task->get_num_variables());
 }
 
 State::State(const AbstractTask &task, const StateRegistry &registry,
