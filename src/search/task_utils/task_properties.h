@@ -5,9 +5,11 @@
 #include "../task_proxy.h"
 #include "../utils/logging.h"
 
-
 #include "../algorithms/int_packer.h"
+
+#include <algorithm>
 #include <iostream>
+#include <limits>
 
 namespace task_properties {
 
@@ -71,9 +73,25 @@ extern bool has_conditional_effects(TaskProxy task);
 extern void verify_no_conditional_effects(TaskProxy task);
 
 extern std::vector<int> get_operator_costs(const TaskProxy &task_proxy);
-extern double get_average_operator_cost(TaskProxy task_proxy);
-extern int get_min_operator_cost(TaskProxy task_proxy);
 
+template <typename AnyTaskProxy>
+double get_average_operator_cost(AnyTaskProxy task_proxy) {
+    double average_operator_cost = 0;
+    for (OperatorProxy op : task_proxy.get_operators()) {
+        average_operator_cost += op.get_cost();
+    }
+    average_operator_cost /= task_proxy.get_operators().size();
+    return average_operator_cost;
+}
+
+template <typename AnyTaskProxy>
+int get_min_operator_cost(AnyTaskProxy task_proxy) {
+    int min_cost = std::numeric_limits<int>::max();
+    for (OperatorProxy op : task_proxy.get_operators()) {
+        min_cost = std::min(min_cost, op.get_cost());
+    }
+    return min_cost;
+}
 /*
   Return the number of facts of the task.
   Runtime: O(n), where n is the number of state variables.

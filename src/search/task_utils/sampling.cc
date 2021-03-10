@@ -3,12 +3,9 @@
 #include "successor_generator.h"
 #include "predecessor_generator.h"
 
-#include "../task_proxy.h"
-
 #include "../task_utils/task_properties.h"
-#include "../utils/memory.h"
-#include "../utils/rng.h"
 
+#include <cmath>
 #include <queue>
 
 using namespace std;
@@ -141,7 +138,6 @@ S sample_with_random_walk(
         const function<bool (S &)> *is_dead_end = nullptr,
         const function<bool (S &)> *is_valid_state = nullptr) {
     // Sample one state with a random walk of length length.
-    cout << "C" << endl;
     S current_state(state);
     S candidate_state(current_state);
     S previous_state(current_state);
@@ -229,7 +225,7 @@ static State sample_state_with_random_forward_walk(
           must have costs of 0 and in this case the if-clause triggers.
         */
         assert(average_operator_cost != 0);
-        int solution_steps_estimate = int((init_h / average_operator_cost) + 0.5);
+        int solution_steps_estimate = int(lround(init_h / average_operator_cost));
         n = 4 * solution_steps_estimate;
     }
     double p = 0.5;
@@ -292,10 +288,10 @@ static PartialAssignment sample_partial_assignments_with_random_backward_walks(
     double average_operator_cost,
     utils::RandomNumberGenerator &rng,
     bool deprioritize_undoing_steps,
-    const ValidStateDetector  is_valid_state,
+    const ValidStateDetector  &is_valid_state,
     const PartialAssignmentBias *bias,
     bool probabilistic_bias,
-    const PartialDeadEndDetector is_dead_end) {
+    const PartialDeadEndDetector &is_dead_end) {
     int n;
     if (init_h == 0) {
         n = 10;
@@ -307,7 +303,7 @@ static PartialAssignment sample_partial_assignments_with_random_backward_walks(
           must have costs of 0 and in this case the if-clause triggers.
          */
         assert(average_operator_cost != 0);
-        int solution_steps_estimate = int((init_h / average_operator_cost) + 0.5);
+        int solution_steps_estimate = int(lround(init_h / average_operator_cost));
         n = 4 * solution_steps_estimate;
     }
     double p = 0.5;
@@ -372,20 +368,6 @@ State RandomWalkSampler::sample_state_length(
         adapt_bias);
 }
 
-vector<State> RandomWalkSampler::sample_states(
-    int num_samples,
-    int init_h,
-    const DeadEndDetector &is_dead_end) const {
-    vector<State> samples;
-    samples.reserve(num_samples);
-    for (int i = 0; i < num_samples; ++i) {
-        samples.push_back(sample_state(init_h, is_dead_end));
-    }
-    return samples;
-}
-
-
-
 RandomRegressionWalkSampler::RandomRegressionWalkSampler(
     const RegressionTaskProxy &regression_task_proxy,
     utils::RandomNumberGenerator &rng)
@@ -440,29 +422,10 @@ PartialAssignment RandomRegressionWalkSampler::sample_state_length(
         is_dead_end);
 }
 
-vector<PartialAssignment> RandomRegressionWalkSampler::sample_states(
-    int num_samples,
-    int init_h,
-    bool deprioritize_undoing_steps,
-    const ValidStateDetector &is_valid_state,
-    const PartialAssignmentBias *bias,
-    bool probabilistic_bias,
-    const PartialDeadEndDetector &is_dead_end) const {
-    vector<PartialAssignment> samples;
-    samples.reserve(num_samples);
-    for (int i = 0; i < num_samples; ++i) {
-        samples.push_back(sample_state(
-                init_h, deprioritize_undoing_steps, is_valid_state, bias,
-                probabilistic_bias, is_dead_end));
-    }
-    return samples;
-}
-
-
 std::pair<PartialAssignmentRegistry, utils::HashMap<size_t, int>> RandomRegressionWalkSampler::sample_area(
         const PartialAssignment &initial,
-        const int max_cost,
-        const int max_states,
+        int max_cost,
+        int max_states,
         bool check_mutexes) const {
 
     PartialAssignmentRegistry registry;

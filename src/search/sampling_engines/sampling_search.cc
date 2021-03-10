@@ -35,8 +35,7 @@ static size_t calculate_modification_hash(
     ostringstream oss;
     task_properties::dump_pddl(init, oss, "\t");
     task_properties::dump_goals(goals, oss, "\t");
-    std::string merged = oss.str();
-    return SHASH(merged);
+    return SHASH(oss.str());
 }
 
 string SamplingSearch::construct_meta(

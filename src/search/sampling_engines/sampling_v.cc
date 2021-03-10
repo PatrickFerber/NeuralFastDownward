@@ -136,9 +136,10 @@ std::pair<int, std::vector<StateTree> > SamplingV::construct_state_tree(
             successor_generator.generate_applicable_ops(
                     curr_state,
                     applicable_ops);
+            // No child -> add again such that is stays a leave
             if (applicable_ops.empty()) {
                 states.emplace_back(states[i].state_id, i, 0, -1);
-            } else {
+            } else { // add childs as leaves
                 for (OperatorID op_id : applicable_ops) {
                     OperatorProxy op = q_task_proxy->get_operators()[op_id];
                     const State succ_state =
@@ -254,7 +255,6 @@ vector<string> SamplingV::sample(shared_ptr<AbstractTask> task) {
         reload_task(task);
         task_reload_counter = 0;
     }
-
 
     const State state = q_state_registry->insert_state(
             task->get_initial_state_values());

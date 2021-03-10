@@ -70,11 +70,6 @@ public:
         bool probabilistic_bias=true,
         double adapt_bias=-1
         ) const;
-
-    std::vector<State> sample_states(
-        int num_samples,
-        int init_h,
-        const DeadEndDetector &is_dead_end = [](const State &) {return false;}) const;
 };
 
 
@@ -84,18 +79,15 @@ protected:
     utils::HashMap<PartialAssignment, size_t> assignment2id;
 
 public:
-    PartialAssignmentRegistry() {};
-    PartialAssignmentRegistry(PartialAssignmentRegistry &&other)
-            : id2assignment(std::move(other.id2assignment)),
-              assignment2id(std::move(other.assignment2id)) {}
-
+    PartialAssignmentRegistry() = default;
+    PartialAssignmentRegistry(PartialAssignmentRegistry &&other) = default;
 
     const PartialAssignment& lookup_by_id(size_t id) const {
         assert(id < id2assignment.size());
         return id2assignment[id];
     }
 
-    int lookup_or_insert_by_assignment(PartialAssignment &partial_assignment){
+    size_t lookup_or_insert_by_assignment(PartialAssignment &partial_assignment){
         auto iter = assignment2id.find(partial_assignment);
         if (iter == assignment2id.end()) {
             assignment2id[partial_assignment] = id2assignment.size();
@@ -149,19 +141,10 @@ public:
         double adapt_bias=-1,
         const PartialDeadEndDetector &is_dead_end = [](const PartialAssignment &) {return false;}) const;
 
-    std::vector<PartialAssignment> sample_states(
-        int num_samples,
-        int init_h,
-        bool deprioritize_undoing_steps = false,
-        const ValidStateDetector &is_valid_state = [](const PartialAssignment &) {return true;},
-        const PartialAssignmentBias *bias = nullptr,
-        bool probabilistic_bias=true,
-        const PartialDeadEndDetector &is_dead_end = [](const PartialAssignment &) {return false;}) const;
-
     std::pair<PartialAssignmentRegistry, utils::HashMap<size_t, int>> sample_area(
         const PartialAssignment &initial,
-        const int max_cost,
-        const int max_states,
+        int max_cost,
+        int max_states,
         bool check_mutexes = true
         ) const;
 };
