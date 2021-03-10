@@ -1,4 +1,4 @@
-#include "successor_generator_internals.h"
+#include "operator_generator_internals.h"
 
 #include "../task_proxy.h"
 
@@ -67,7 +67,7 @@ using namespace std;
     zero-terminated heap-allocated array.
 */
 
-namespace successor_generator {
+namespace operator_generator {
 
 inline OperatorID min_op_id(OperatorID &op_id1, OperatorID &op_id2) {
     if (op_id1.get_index() == -1) {

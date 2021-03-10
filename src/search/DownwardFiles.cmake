@@ -607,9 +607,11 @@ fast_downward_plugin(
     NAME REGRESSION
     HELP "Tools for regression"
     SOURCES
-        task_utils/regression_task_proxy
+        task_utils/operator_generator_factory
+        task_utils/operator_generator_internals
         task_utils/predecessor_generator
         task_utils/predecessor_generator_factory
+        task_utils/regression_task_proxy
     DEPENDS TASK_PROPERTIES SUCCESSOR_GENERATOR
     DEPENDENCY_ONLY
 )
@@ -641,9 +643,10 @@ fast_downward_plugin(
     NAME SUCCESSOR_GENERATOR
     HELP "Successor generator"
     SOURCES
+        task_utils/operator_generator_factory
+        task_utils/operator_generator_internals
         task_utils/successor_generator
         task_utils/successor_generator_factory
-        task_utils/successor_generator_internals
     DEPENDS TASK_PROPERTIES
     DEPENDENCY_ONLY
 )

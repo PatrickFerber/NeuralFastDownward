@@ -1,9 +1,7 @@
 #include "successor_generator.h"
 
+#include "operator_generator_internals.h"
 #include "successor_generator_factory.h"
-#include "successor_generator_internals.h"
-
-#include "../abstract_task.h"
 
 using namespace std;
 

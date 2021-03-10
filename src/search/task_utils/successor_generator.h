@@ -4,17 +4,18 @@
 #include "../per_task_information.h"
 
 #include <memory>
-#include <vector>
 
 class OperatorID;
 class State;
 class TaskProxy;
 
+namespace operator_generator {
+    class GeneratorBase;
+}
 namespace successor_generator {
-class GeneratorBase;
 
 class SuccessorGenerator {
-    std::unique_ptr<GeneratorBase> root;
+    std::unique_ptr<operator_generator::GeneratorBase> root;
 
 public:
     explicit SuccessorGenerator(const TaskProxy &task_proxy);
