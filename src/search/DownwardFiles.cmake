@@ -493,26 +493,26 @@ fast_downward_plugin(
     DEPENDENCY_ONLY
 )
 
-fast_downward_plugin(
-    NAME PROTOBUF_NETWORKS
-    HELP "Networks using Protobuf and Tensorflow"
-    SOURCES
-        neural_networks/protobuf_network
-        neural_networks/state_network
-        neural_networks/state_goal_network
-    DEPENDS NEURAL_NETWORKS
-    PACKAGES TENSORFLOW PROTOBUF EIGEN
-)
-
 #fast_downward_plugin(
-#        NAME TORCH_NETWORKS
-#        HELP "Networks using torch"
-#        SOURCES
-#        neural_networks/torch_network
-#        neural_networks/test_torch_network
-#        DEPENDS NEURAL_NETWORKS
-#        PACKAGES Torch
+#    NAME PROTOBUF_NETWORKS
+#    HELP "Networks using Protobuf and Tensorflow"
+#    SOURCES
+#        neural_networks/protobuf_network
+#        neural_networks/state_network
+#        neural_networks/state_goal_network
+#    DEPENDS NEURAL_NETWORKS
+#    PACKAGES TENSORFLOW PROTOBUF EIGEN
 #)
+
+fast_downward_plugin(
+        NAME TORCH_NETWORKS
+        HELP "Networks using torch"
+        SOURCES
+        neural_networks/torch_network
+        neural_networks/test_torch_network
+        DEPENDS NEURAL_NETWORKS
+        PACKAGES Torch
+)
 
 fast_downward_plugin(
     NAME NETWORK_HEURISTIC

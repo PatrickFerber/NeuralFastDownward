@@ -56,6 +56,7 @@ void TestTorchNetwork::parse_output(const torch::jit::IValue &output) {
     for (int64_t i = 0; i < tensor.size(0); ++i){
         last_h = accessor[i];
         last_h_batch.push_back(last_h);
+        cout << "TestTorch Output: " << accessor[i] << endl;
     }
 }
 
