@@ -44,6 +44,10 @@ void Heuristic::add_options_to_parser(OptionParser &parser) {
     parser.add_option<bool>("cache_estimates", "cache heuristic estimates", "true");
 }
 
+std::pair<int, double> Heuristic::compute_heuristic_and_confidence(const State &state) {
+    return {compute_heuristic(state), DEAD_END};
+}
+
 EvaluationResult Heuristic::compute_result(EvaluationContext &eval_context) {
     EvaluationResult result;
 
@@ -51,15 +55,23 @@ EvaluationResult Heuristic::compute_result(EvaluationContext &eval_context) {
 
     const State &state = eval_context.get_state();
     bool calculate_preferred = eval_context.get_calculate_preferred();
+    bool report_confidence = eval_context.get_report_confidence();
 
     int heuristic = NO_VALUE;
+    double confidence = DEAD_END;
 
-    if (!calculate_preferred && cache_evaluator_values &&
+    if (!report_confidence && !calculate_preferred && cache_evaluator_values &&
         heuristic_cache[state].h != NO_VALUE && !heuristic_cache[state].dirty) {
         heuristic = heuristic_cache[state].h;
         result.set_count_evaluation(false);
     } else {
-        heuristic = compute_heuristic(state);
+        if (report_confidence) {
+            auto heuristic_confidence = compute_heuristic_and_confidence(state);
+            heuristic = heuristic_confidence.first;
+            confidence = heuristic_confidence.second;
+        } else {
+            heuristic = compute_heuristic(state);
+        }
         if (cache_evaluator_values) {
             heuristic_cache[state] = HEntry(heuristic, false);
         }
@@ -67,6 +79,7 @@ EvaluationResult Heuristic::compute_result(EvaluationContext &eval_context) {
     }
 
     assert(heuristic == DEAD_END || heuristic >= 0);
+    assert(confidence == DEAD_END || (0 <= confidence && confidence <= 1));
 
     if (heuristic == DEAD_END) {
         /*
@@ -91,6 +104,7 @@ EvaluationResult Heuristic::compute_result(EvaluationContext &eval_context) {
 
     result.set_evaluator_value(heuristic);
     result.set_preferred_operators(preferred_operators.pop_as_vector());
+    result.set_confidence(confidence);
     assert(preferred_operators.empty());
 
     return result;

@@ -19,6 +19,7 @@ class Options;
 }
 
 class Heuristic : public Evaluator {
+protected:
     struct HEntry {
         /* dirty is conceptually a bool, but Visual C++ does not support
            packing ints and bools together in a bitfield. */
@@ -43,8 +44,6 @@ class Heuristic : public Evaluator {
       next, but this seems to be the only potential downside.
     */
     ordered_set::OrderedSet<OperatorID> preferred_operators;
-
-protected:
     /*
       Cache for saving h values
       Before accessing this cache always make sure that the cache_evaluator_values
@@ -63,6 +62,7 @@ public:
     enum {DEAD_END = -1, NO_VALUE = -2};
 
     virtual int compute_heuristic(const State &ancestor_state) = 0;
+    virtual std::pair<int, double> compute_heuristic_and_confidence(const State &state);
 
     /*
       Usage note: Marking the same operator as preferred multiple times

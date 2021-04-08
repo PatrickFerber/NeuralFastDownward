@@ -47,13 +47,15 @@ class EvaluationContext {
     bool preferred;
     SearchStatistics *statistics;
     bool calculate_preferred;
+    bool report_confidence;
 
     static const int INVALID = -1;
 
     EvaluationContext(
         const EvaluatorCache &cache, const State &state, int g_value,
         bool is_preferred, SearchStatistics *statistics,
-        bool calculate_preferred);
+        bool calculate_preferred,
+        bool report_confidence = false);
 public:
     /*
       Copy existing heuristic cache and use it to look up heuristic values.
@@ -64,14 +66,15 @@ public:
     EvaluationContext(
         const EvaluationContext &other,
         int g_value, bool is_preferred, SearchStatistics *statistics,
-        bool calculate_preferred = false);
+        bool calculate_preferred = false, bool report_confidence = false);
     /*
       Create new heuristic cache for caching heuristic values. Used for example
       by eager search.
     */
     EvaluationContext(
         const State &state, int g_value, bool is_preferred,
-        SearchStatistics *statistics, bool calculate_preferred = false);
+        SearchStatistics *statistics, bool calculate_preferred = false,
+        bool report_confidence = false);
     /*
       Use the following constructor when you don't care about g values,
       preferredness (and statistics), e.g. when sampling states for heuristics.
@@ -86,7 +89,8 @@ public:
     */
     EvaluationContext(
         const State &state,
-        SearchStatistics *statistics = nullptr, bool calculate_preferred = false);
+        SearchStatistics *statistics = nullptr, bool calculate_preferred = false,
+        bool report_confidence = false);
 
     const EvaluationResult &get_result(Evaluator *eval);
     const EvaluatorCache &get_cache() const;
@@ -110,6 +114,7 @@ public:
     int get_evaluator_value_or_infinity(Evaluator *eval);
     const std::vector<OperatorID> &get_preferred_operators(Evaluator *eval);
     bool get_calculate_preferred() const;
+    bool get_report_confidence() const;
 };
 
 #endif

@@ -4,6 +4,7 @@ import re
 import sys
 
 from . import aliases
+from . import dynamic_args
 from . import returncodes
 from . import util
 
@@ -475,6 +476,23 @@ def parse_args():
 
     if not args.version and not args.show_aliases and not args.cleanup:
         _set_components_and_inputs(parser, args)
+
+    if isinstance(args.search_options, list):
+        do_next = None
+        for no, arg in enumerate(args.search_options):
+            if do_next is not None:
+                try:
+                    args.search_options[no] = (
+                        dynamic_args.replace_options_for_dynamic(
+                            arg, do_next, args))[0]
+                except ValueError as e:
+                    print_usage_and_exit_with_driver_input_error(
+                        parser, "search_options: %s" % str(e))
+                do_next = None
+            elif arg in ["--network", "--heuristic", "--evaluator", "--search"]:
+                do_next = arg[2:]
+        assert do_next is None, args.search_options
+
         if "translate" not in args.components or "search" not in args.components:
             args.keep_sas_file = True
 

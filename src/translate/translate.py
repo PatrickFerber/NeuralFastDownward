@@ -15,20 +15,21 @@ if not python_version_supported():
 from collections import defaultdict
 from copy import deepcopy
 from itertools import product
-
-import axiom_rules
-import fact_groups
-import instantiate
-import normalize
-import options
-import pddl
-import pddl_parser
-import sas_tasks
 import signal
-import simplify
-import timers
-import tools
-import variable_order
+
+from . import axiom_rules
+from . import fact_groups
+from . import instantiate
+from . import normalize
+from . import options
+from . import pddl
+from . import pddl_parser
+from . import sas_tasks
+from . import simplify
+from . import timers
+from . import tools
+from . import variable_order
+
 
 # TODO: The translator may generate trivial derived variables which are always
 # true, for example if there ia a derived predicate in the input that only
@@ -712,7 +713,8 @@ def handle_sigxcpu(signum, stackframe):
     os._exit(TRANSLATE_OUT_OF_TIME)
 
 
-if __name__ == "__main__":
+def call():
+    options.setup()
     try:
         signal.signal(signal.SIGXCPU, handle_sigxcpu)
     except AttributeError:
@@ -733,3 +735,6 @@ if __name__ == "__main__":
         traceback.print_exc(file=sys.stdout)
         print("=" * 79)
         sys.exit(TRANSLATE_OUT_OF_MEMORY)
+
+if __name__ == "__main__":
+    call()

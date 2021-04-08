@@ -11,35 +11,37 @@ using namespace std;
 EvaluationContext::EvaluationContext(
     const EvaluatorCache &cache, const State &state, int g_value,
     bool is_preferred, SearchStatistics *statistics,
-    bool calculate_preferred)
+    bool calculate_preferred,
+    bool report_confidence)
     : cache(cache),
       state(state),
       g_value(g_value),
       preferred(is_preferred),
       statistics(statistics),
-      calculate_preferred(calculate_preferred) {
+      calculate_preferred(calculate_preferred),
+      report_confidence(report_confidence) {
 }
 
 
 EvaluationContext::EvaluationContext(
     const EvaluationContext &other, int g_value,
-    bool is_preferred, SearchStatistics *statistics, bool calculate_preferred)
+    bool is_preferred, SearchStatistics *statistics, bool calculate_preferred, bool report_confidence)
     : EvaluationContext(other.cache, other.state, g_value, is_preferred,
-                        statistics, calculate_preferred) {
+                        statistics, calculate_preferred, report_confidence) {
 }
 
 EvaluationContext::EvaluationContext(
     const State &state, int g_value, bool is_preferred,
-    SearchStatistics *statistics, bool calculate_preferred)
+    SearchStatistics *statistics, bool calculate_preferred, bool report_confidence)
     : EvaluationContext(EvaluatorCache(), state, g_value, is_preferred,
-                        statistics, calculate_preferred) {
+                        statistics, calculate_preferred, report_confidence) {
 }
 
 EvaluationContext::EvaluationContext(
     const State &state,
-    SearchStatistics *statistics, bool calculate_preferred)
+    SearchStatistics *statistics, bool calculate_preferred, bool report_confidence)
     : EvaluationContext(EvaluatorCache(), state, INVALID, false,
-                        statistics, calculate_preferred) {
+                        statistics, calculate_preferred, report_confidence) {
 }
 
 const EvaluationResult &EvaluationContext::get_result(Evaluator *evaluator) {
@@ -95,4 +97,8 @@ EvaluationContext::get_preferred_operators(Evaluator *eval) {
 
 bool EvaluationContext::get_calculate_preferred() const {
     return calculate_preferred;
+}
+
+bool EvaluationContext::get_report_confidence() const {
+    return report_confidence;
 }

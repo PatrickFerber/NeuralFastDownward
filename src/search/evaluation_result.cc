@@ -36,6 +36,9 @@ void EvaluationResult::set_preferred_operators(
     preferred_operators = move(preferred_ops);
 }
 
+void EvaluationResult::set_confidence(double conf) {
+    confidence = conf;
+}
 void EvaluationResult::set_count_evaluation(bool count_eval) {
     count_evaluation = count_eval;
 }
