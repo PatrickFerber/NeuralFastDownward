@@ -12,7 +12,7 @@ from . import util
 from .plan_manager import PlanManager
 
 # TODO: We might want to turn translate into a module and call it with "python3 -m translate".
-REL_TRANSLATE_PATH = os.path.join("translate", "translate.py")
+REL_TRANSLATE_PATH = "translator.py"
 if os.name == "posix":
     REL_SEARCH_PATH = "downward"
     VALIDATE = "validate"

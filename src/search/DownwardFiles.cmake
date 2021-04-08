@@ -16,6 +16,7 @@
 #        [ HELP <HELP> ]
 #        SOURCES
 #            <FILE_1> [ <FILE_2> ... ]
+#        [ PACKAGES <PACKAGE 1> <PACKAGE 2> ... ]
 #        [ DEPENDS <PLUGIN_NAME_1> [ <PLUGIN_NAME_2> ... ] ]
 #        [ DEPENDENCY_ONLY ]
 #        [ CORE_PLUGIN ]
@@ -33,6 +34,7 @@
 #   hides the option to enable the plugin in cmake GUIs like ccmake.
 # CORE_PLUGIN always enables the plugin (even if DISABLE_PLUGINS_BY_DEFAULT
 #   is used) and hides the option to disable it in CMake GUIs like ccmake.
+# PACKAGES which are required by the plugin and loaded via find_package
 
 option(
     DISABLE_PLUGINS_BY_DEFAULT
@@ -484,6 +486,43 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
+    NAME NEURAL_NETWORKS
+    HELP "Base files for neural networks"
+    SOURCES
+        neural_networks/abstract_network
+    DEPENDENCY_ONLY
+)
+
+fast_downward_plugin(
+    NAME PROTOBUF_NETWORKS
+    HELP "Networks using Protobuf and Tensorflow"
+    SOURCES
+        neural_networks/protobuf_network
+        neural_networks/state_network
+        neural_networks/state_goal_network
+    DEPENDS NEURAL_NETWORKS
+    PACKAGES TENSORFLOW PROTOBUF EIGEN
+)
+
+#fast_downward_plugin(
+#        NAME TORCH_NETWORKS
+#        HELP "Networks using torch"
+#        SOURCES
+#        neural_networks/torch_network
+#        neural_networks/test_torch_network
+#        DEPENDS NEURAL_NETWORKS
+#        PACKAGES Torch
+#)
+
+fast_downward_plugin(
+    NAME NETWORK_HEURISTIC
+    HELP "The network heuristic"
+    SOURCES
+        heuristics/network_heuristic
+    DEPENDS NEURAL_NETWORKS
+)
+
+fast_downward_plugin(
     NAME RELAXATION_HEURISTIC
     HELP "The base class for relaxation heuristics"
     SOURCES
@@ -823,7 +862,7 @@ fast_downward_plugin(
     DEPENDENCY_ONLY
 )
 
-fast_downward_add_plugin_sources(PLANNER_SOURCES)
+fast_downward_add_plugin_sources_and_packages(PLANNER_SOURCES PLANNER_REQ_PACKAGES)
 
 # The order in PLANNER_SOURCES influences the order in which object
 # files are given to the linker, which can have a significant influence

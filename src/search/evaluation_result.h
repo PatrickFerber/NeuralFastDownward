@@ -11,6 +11,7 @@ class EvaluationResult {
 
     int evaluator_value;
     std::vector<OperatorID> preferred_operators;
+    double confidence;
     bool count_evaluation;
 public:
     // "INFINITY" is an ISO C99 macro and "INFINITE" is a macro in windows.h.
@@ -43,9 +44,11 @@ public:
     int get_evaluator_value() const;
     bool get_count_evaluation() const;
     const std::vector<OperatorID> &get_preferred_operators() const;
+    double get_confidence() const;
 
     void set_evaluator_value(int value);
     void set_preferred_operators(std::vector<OperatorID> &&preferred_operators);
+    void set_confidence(double confidence);
     void set_count_evaluation(bool count_eval);
 };
 

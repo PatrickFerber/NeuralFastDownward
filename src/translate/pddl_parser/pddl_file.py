@@ -1,5 +1,3 @@
-import options
-
 from . import lisp_parser
 from . import parsing_functions
 
@@ -24,6 +22,8 @@ def parse_pddl_file(type, filename):
 
 
 def open(domain_filename=None, task_filename=None):
+    if domain_filename is None or task_filename is None:
+        from .. import options
     task_filename = task_filename or options.task
     domain_filename = domain_filename or options.domain
 

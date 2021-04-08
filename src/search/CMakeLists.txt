@@ -29,6 +29,28 @@ fast_downward_set_linker_flags()
 include("${CMAKE_CURRENT_SOURCE_DIR}/DownwardFiles.cmake")
 add_executable(downward ${PLANNER_SOURCES})
 
+## == Required Packages ==
+IF (DEFINED ENV{PATH_TORCH})
+    list(APPEND CMAKE_PREFIX_PATH "$ENV{PATH_TORCH}")
+ENDIF()
+
+foreach(PACKAGE ${PLANNER_REQ_PACKAGES})
+    find_package(${PACKAGE} REQUIRED)
+    string(TOUPPER ${PACKAGE} CAPITALIZED_PACKAGE)
+    foreach (P ${PACKAGE} ${CAPITALIZED_PACKAGE})
+        if(${P}_INCLUDE_DIRS)
+            if(${PACKAGE}_SUPPRESS_WARNINGS)
+                include_directories(SYSTEM ${${P}_INCLUDE_DIRS})
+            else()
+                include_directories(${${P}_INCLUDE_DIRS})
+            endif()
+        endif()
+        if(${P}_LIBRARIES)
+            target_link_libraries(downward ${${P}_LIBRARIES})
+        endif()
+    endforeach()
+endforeach()
+
 ## == Includes ==
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ext)
