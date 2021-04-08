@@ -70,7 +70,7 @@ endmacro()
 
 macro(fast_downward_set_linker_flags)
     if(UNIX)
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -g")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -g -Wl,--allow-multiple-definition -Wl,--whole-archive -Wl,--no-as-needed")
     endif()
 endmacro()
 
