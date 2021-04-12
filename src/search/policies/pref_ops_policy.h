@@ -28,11 +28,11 @@ class PrefOpsPolicy : public Policy {
 protected:
     const successor_generator::SuccessorGenerator &successor_generator;
 
-    PolicyResult compute_policy(const State &state);
+    virtual PolicyResult compute_policy(const State &state) override;
 public:
     PrefOpsPolicy(const options::Options &options);
     ~PrefOpsPolicy();
-    bool dead_ends_are_reliable() const;
+    virtual bool dead_ends_are_reliable() const override;
 };
 }
 

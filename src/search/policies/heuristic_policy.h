@@ -26,11 +26,11 @@ class HeuristicPolicy : public Policy {
 protected:
     const successor_generator::SuccessorGenerator &successor_generator;
 
-    PolicyResult compute_policy(const State &state);
+    virtual PolicyResult compute_policy(const State &state) override;
 public:
     HeuristicPolicy(const options::Options &options);
     ~HeuristicPolicy();
-    bool dead_ends_are_reliable() const;
+    virtual bool dead_ends_are_reliable() const override;
 };
 }
 
