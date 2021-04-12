@@ -29,7 +29,7 @@ PolicyResult HeuristicPolicy::compute_policy(const State &state) {
 
     // look for action leading to the state with best (lowest) heuristic value
     int h_best = -1;
-    OperatorID op_best = OperatorID::no_operator;
+    vector<OperatorID> op_best;
     for (OperatorID op_id : applicable_ops) {
         OperatorProxy op = task_proxy.get_operators()[op_id];
         assert(task_properties::is_applicable(op, state));
@@ -39,16 +39,14 @@ PolicyResult HeuristicPolicy::compute_policy(const State &state) {
         // better or first action found
         if (h_best == -1 || h < h_best) {
             h_best = h;
-            op_best = op_id;
+            op_best.clear();
+        }
+        if (h == h_best){
+            op_best.push_back(op_id);
         }
     }
 
-    vector<OperatorID> preferred_operators = vector<OperatorID>();
-    if (op_best != OperatorID::no_operator) {
-        preferred_operators.push_back(op_best);
-    }
-
-    return PolicyResult(move(preferred_operators), vector<float>(), true);
+    return PolicyResult(move(op_best), vector<float>(), true);
 }
 
 bool HeuristicPolicy::dead_ends_are_reliable() const {
