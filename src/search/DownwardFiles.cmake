@@ -480,7 +480,7 @@ fast_downward_plugin(
     NAME POLICY_SEARCH
     HELP "Policy guided search algorithm"
     SOURCES
-        search_engines/policy_search
+        search_engines/policy_walk
 #        search_engines/policy_search_explored
 #        search_engines/open_list_policy_search
     DEPENDS SEARCH_COMMON

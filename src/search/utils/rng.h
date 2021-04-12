@@ -44,23 +44,9 @@ public:
         return vec.begin() + operator()(vec.size());
     }
 
-    size_t weighted_choose_index(const std::vector<int> &weights) {
-        assert(all_of(weights.begin(), weights.end(), [](int i) {return i >= 0;}));
-        int sum = std::accumulate(weights.begin(), weights.end(), 0);
-        assert(sum > 0);
-        int choice = operator()(sum);
-        for (size_t i = 0; i < weights.size(); ++i) {
-            choice -= weights[i];
-            if (choice < 0) {
-                return i;
-            }
-        }
-        assert(false);
-        return 0;
-    }
-
-    size_t weighted_choose_index(const std::vector<double> &weights) {
-        assert(all_of(weights.begin(), weights.end(), [](double i) {return i >= 0;}));
+    template<typename W>
+    size_t weighted_choose_index(const std::vector<W> &weights) {
+        assert(all_of(weights.begin(), weights.end(), [](W i) {return i >= 0.0;}));
         double sum = std::accumulate(weights.begin(), weights.end(), 0.0);
         assert(sum > 0.0);
         double choice = operator()() * sum;
@@ -74,18 +60,11 @@ public:
         return 0;
     }
 
-    template<typename T>
-    typename std::vector<T>::const_iterator weighted_choose(
-            const std::vector<T> &vec,
-            const std::vector<double> &weights) {
-        assert(vec.size() == weights.size());
-        return vec.begin() + weighted_choose_index(weights);
-    }
 
-    template<typename T>
+    template<typename T, typename W>
     typename std::vector<T>::const_iterator weighted_choose(
             const std::vector<T> &vec,
-            const std::vector<int> &weights) {
+            const std::vector<W> &weights) {
         assert(vec.size() == weights.size());
         return vec.begin() + weighted_choose_index(weights);
     }

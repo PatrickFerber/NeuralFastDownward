@@ -32,6 +32,7 @@ public:
     void open(const SearchNode &parent_node,
               const OperatorProxy &parent_op,
               int adjusted_cost);
+    void reopen();
     void reopen(const SearchNode &parent_node,
                 const OperatorProxy &parent_op,
                 int adjusted_cost);

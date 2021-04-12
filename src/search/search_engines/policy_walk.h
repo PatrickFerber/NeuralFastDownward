@@ -1,6 +1,5 @@
-#ifndef SEARCH_ENGINES_POLICY_SEARCH_H
-#define SEARCH_ENGINES_POLICY_SEARCH_H
-
+#ifndef SEARCH_ENGINES_POLICY_WALK_H
+#define SEARCH_ENGINES_POLICY_WALK_H
 #include "../evaluation_context.h"
 #include "../heuristic.h"
 #include "../open_list.h"
@@ -13,18 +12,31 @@ namespace options {
 class Options;
 }
 
+namespace utils {
+class RandomNumberGenerator;
+}
+
 class Policy;
 
 namespace search_engines {
+
+enum OperatorSelection {
+    First, Best, Probability
+};
+
+OperatorSelection get_operator_selection(std::string selection);
 
 /*
   Policy Search, following a given Policy by naively choosing the
   (first of all) most probable operator(s)
 */
-class PolicySearch : public SearchEngine {
+class PolicyWalk : public SearchEngine {
     std::shared_ptr<Policy> policy;
     std::vector<std::shared_ptr<Evaluator>> dead_end_evaluators;
     const int trajectory_limit;
+    const bool reopen;
+    const OperatorSelection op_select;
+    std::shared_ptr<utils::RandomNumberGenerator> rng;
     EvaluationContext current_context;
     int trajectory_length = 0;
 
@@ -34,8 +46,8 @@ protected:
     virtual SearchStatus step() override;
 
 public:
-    explicit PolicySearch(const options::Options &opts);
-    virtual ~PolicySearch() override;
+    explicit PolicyWalk(const options::Options &opts);
+    virtual ~PolicyWalk() override;
 
     virtual void print_statistics() const override;
 };
