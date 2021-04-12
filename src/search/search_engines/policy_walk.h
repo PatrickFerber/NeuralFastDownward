@@ -37,10 +37,10 @@ class PolicyWalk : public SearchEngine {
     const bool reopen;
     const OperatorSelection op_select;
     std::shared_ptr<utils::RandomNumberGenerator> rng;
-    EvaluationContext current_context;
+    State current_state;
     int trajectory_length = 0;
 
-    bool is_dead_end();
+    bool is_dead_end(EvaluationContext &eval_context);
 protected:
     virtual void initialize() override;
     virtual SearchStatus step() override;

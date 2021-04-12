@@ -42,7 +42,7 @@ namespace search_engines {
       reopen(opts.get<bool>("reopen")),
       op_select(get_operator_selection(opts.get<string>("operator_selection"))),
       rng(utils::parse_rng_from_options(opts)),
-      current_context(EvaluationContext(state_registry.get_initial_state(), 0, true, &statistics))
+      current_state(state_registry.get_initial_state())
       {
         if (trajectory_limit != -1 && trajectory_limit <= 0) {
             cerr << "Trajectory limit has to be positive!" << endl;
@@ -53,30 +53,33 @@ namespace search_engines {
     PolicyWalk::~PolicyWalk() {
     }
 
-    bool PolicyWalk::is_dead_end() {
+    bool PolicyWalk::is_dead_end(EvaluationContext &eval_context) {
         return any_of(dead_end_evaluators.begin(), dead_end_evaluators.end(),
                    [&] (shared_ptr<Evaluator> eval){
-            return current_context.is_evaluator_value_infinite(eval.get());});
+            return eval_context.is_evaluator_value_infinite(eval.get());});
     }
+
     void PolicyWalk::initialize() {
         cout << "Conducting policy search" << endl;
-        if (is_dead_end()) {
+        SearchNode current_node = search_space.get_node(current_state);
+        EvaluationContext eval_context(
+                current_node.get_state(), 0,
+                true, &statistics);
+        if (is_dead_end(eval_context)) {
+            current_node.mark_as_dead_end();
+            statistics.inc_dead_ends();
             cout << "Initial state is a dead end, no solution" << endl;
             utils::exit_with(ExitCode::SEARCH_UNSOLVABLE);
         }
-        statistics.inc_evaluated_states();
-
-        SearchNode node = search_space.get_node(current_context.get_state());
-        node.open_initial();
+        current_node.open_initial();
     }
 
     SearchStatus PolicyWalk::step() {
-        const State &state = current_context.get_state();
-        SearchNode node = search_space.get_node(state);
-        node.close();
-        assert(!node.is_dead_end());
+        SearchNode current_node = search_space.get_node(current_state);
+        assert(!current_node.is_dead_end());
+        current_node.close();
 
-        if (check_goal_and_set_plan(state)) {
+        if (check_goal_and_set_plan(current_state)) {
             return SOLVED;
         }
         statistics.inc_expanded();
@@ -86,10 +89,9 @@ namespace search_engines {
             return SearchStatus::FAILED;
         }
 
-        // collect policy output in current EvaluationContext
-        vector<OperatorID> operator_ids = current_context.get_preferred_operators(policy.get());
-        vector<float> operator_prefs = current_context.get_operator_preferences(policy.get());
-        assert(!operator_ids.empty());
+        EvaluationContext eval_context(current_state, current_node.get_g(), true, &statistics);
+        vector<OperatorID> operator_ids = eval_context.get_preferred_operators(policy.get());
+        vector<float> operator_prefs = eval_context.get_operator_preferences(policy.get());
 
         while(!operator_ids.empty()) {
             assert(operator_ids.size() == operator_prefs.size());
@@ -123,19 +125,20 @@ namespace search_engines {
             OperatorID succ_op = operator_ids[op_idx];
             assert(succ_op != OperatorID::no_operator);
             OperatorProxy op_proxy = task_proxy.get_operators()[succ_op];
-            assert(task_properties::is_applicable(op_proxy, state));
-            const State succ_state = state_registry.get_successor_state(state, op_proxy);
+            assert(task_properties::is_applicable(op_proxy, current_state));
+            const State succ_state = state_registry.get_successor_state(
+                    current_state, op_proxy);
             SearchNode succ_node = search_space.get_node(succ_state);
             statistics.inc_generated();
 
             // succ_node cannot be flagged as dead end, because then we would
             // have evaluated it earlier and stopped the search.
-            current_context = EvaluationContext(
-                    succ_state, node.get_g() + get_adjusted_cost(op_proxy),
+            eval_context = EvaluationContext(
+                    succ_state, current_node.get_g() + get_adjusted_cost(op_proxy),
                     true, &statistics);
             if (succ_node.is_new()) {
                 statistics.inc_evaluated_states();
-                if (is_dead_end()) {
+                if (is_dead_end(eval_context)) {
                     operator_ids.erase(operator_ids.begin() + op_idx);
                     operator_prefs.erase(operator_prefs.begin() + op_idx);
                     succ_node.mark_as_dead_end();
@@ -143,13 +146,13 @@ namespace search_engines {
             }
 
             if(succ_node.is_new()) {
-                succ_node.open(node, op_proxy, get_adjusted_cost(op_proxy));
+                succ_node.open(current_node, op_proxy, get_adjusted_cost(op_proxy));
             } else if (succ_node.is_closed()) {
                 if (reopen) {
                     int adjusted_cost = get_adjusted_cost(op_proxy);
-                    int new_g = node.get_g() + adjusted_cost;
+                    int new_g = current_node.get_g() + adjusted_cost;
                     if (new_g < succ_node.get_g()) {
-                        succ_node.reopen(node, op_proxy, adjusted_cost);
+                        succ_node.reopen(current_node, op_proxy, adjusted_cost);
                         statistics.inc_reopened();
                     } else {
                         succ_node.reopen();
@@ -171,7 +174,7 @@ namespace search_engines {
             }
             cout << "Policy reached state with id " << succ_state.get_id()
                  << " by applying op " << op_proxy.get_name() << endl;
-
+            current_state = move(succ_state);
             trajectory_length++;
             return IN_PROGRESS;
         }
