@@ -634,13 +634,13 @@ fast_downward_plugin(
     DEPENDENCY ONLY
 )
 
-#fast_downward_plugin(
-#    NAME NETWORK_POLICY
-#    HELP "The network policy"
-#    SOURCES
-#        policies/network_policy
-#    DEPENDS NEURAL_NETWORKS POLICIES
-#)
+fast_downward_plugin(
+    NAME NETWORK_POLICY
+    HELP "The network policy"
+    SOURCES
+        policies/network_policy
+    DEPENDS NEURAL_NETWORKS POLICIES
+)
 
 fast_downward_plugin(
     NAME CORE_TASKS
