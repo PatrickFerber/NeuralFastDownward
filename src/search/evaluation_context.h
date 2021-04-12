@@ -3,6 +3,7 @@
 
 #include "evaluation_result.h"
 #include "evaluator_cache.h"
+#include "policy_cache.h"
 #include "operator_id.h"
 #include "task_proxy.h"
 
@@ -42,6 +43,7 @@ class SearchStatistics;
 
 class EvaluationContext {
     EvaluatorCache cache;
+    PolicyCache policy_cache;
     State state;
     int g_value;
     bool preferred;
@@ -52,7 +54,9 @@ class EvaluationContext {
     static const int INVALID = -1;
 
     EvaluationContext(
-        const EvaluatorCache &cache, const State &state, int g_value,
+        const EvaluatorCache &cache,
+        const PolicyCache &policy_cache,
+        const State &state, int g_value,
         bool is_preferred, SearchStatistics *statistics,
         bool calculate_preferred,
         bool report_confidence = false);
@@ -93,6 +97,7 @@ public:
         bool report_confidence = false);
 
     const EvaluationResult &get_result(Evaluator *eval);
+    const PolicyResult &get_result(Policy *eval);
     const EvaluatorCache &get_cache() const;
     const State &get_state() const;
     int get_g_value() const;
@@ -110,9 +115,12 @@ public:
       returns numeric_limits<int>::max() for infinite estimates.
     */
     bool is_evaluator_value_infinite(Evaluator *eval);
+    bool is_policy_dead_end(Policy *policy);
     int get_evaluator_value(Evaluator *eval);
     int get_evaluator_value_or_infinity(Evaluator *eval);
     const std::vector<OperatorID> &get_preferred_operators(Evaluator *eval);
+    const std::vector<OperatorID> &get_preferred_operators(Policy *policy);
+    const std::vector<float> &get_operator_preferences(Policy *policy);
     bool get_calculate_preferred() const;
     bool get_report_confidence() const;
 };

@@ -477,6 +477,16 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
+    NAME POLICY_SEARCH
+    HELP "Policy guided search algorithm"
+    SOURCES
+        search_engines/policy_walk
+#        search_engines/policy_search_explored
+#        search_engines/open_list_policy_search
+    DEPENDS SEARCH_COMMON
+)
+
+fast_downward_plugin(
     NAME LP_SOLVER
     HELP "Interface to an LP solver"
     SOURCES
@@ -497,6 +507,7 @@ fast_downward_plugin(
 #    NAME PROTOBUF_NETWORKS
 #    HELP "Networks using Protobuf and Tensorflow"
 #    SOURCES
+##        neural_networks/asnet
 #        neural_networks/protobuf_network
 #        neural_networks/state_network
 #        neural_networks/state_goal_network
@@ -504,15 +515,15 @@ fast_downward_plugin(
 #    PACKAGES TENSORFLOW PROTOBUF EIGEN
 #)
 
-fast_downward_plugin(
-        NAME TORCH_NETWORKS
-        HELP "Networks using torch"
-        SOURCES
-        neural_networks/torch_network
-        neural_networks/test_torch_network
-        DEPENDS NEURAL_NETWORKS
-        PACKAGES Torch
-)
+#fast_downward_plugin(
+#        NAME TORCH_NETWORKS
+#        HELP "Networks using torch"
+#        SOURCES
+#        neural_networks/torch_network
+#        neural_networks/test_torch_network
+#        DEPENDS NEURAL_NETWORKS
+#        PACKAGES Torch
+#)
 
 fast_downward_plugin(
     NAME NETWORK_HEURISTIC
@@ -609,6 +620,26 @@ fast_downward_plugin(
     SOURCES
         heuristics/max_heuristic
     DEPENDS PRIORITY_QUEUES RELAXATION_HEURISTIC
+)
+
+fast_downward_plugin(
+    NAME POLICIES
+    HELP "The heuristic preferred operators policy"
+    SOURCES
+        policy
+        policy_cache
+        policy_result
+        policies/heuristic_policy
+        policies/pref_ops_policy
+    DEPENDENCY ONLY
+)
+
+fast_downward_plugin(
+    NAME NETWORK_POLICY
+    HELP "The network policy"
+    SOURCES
+        policies/network_policy
+    DEPENDS NEURAL_NETWORKS POLICIES
 )
 
 fast_downward_plugin(

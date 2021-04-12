@@ -9,6 +9,7 @@
 #include "task_utils/successor_generator.h"
 #include "task_utils/task_properties.h"
 #include "tasks/root_task.h"
+#include "task_utils/successor_generator.h"
 #include "utils/countdown_timer.h"
 #include "utils/logging.h"
 #include "utils/rng_options.h"
@@ -24,30 +25,13 @@ using utils::ExitCode;
 
 class PruningMethod;
 
-successor_generator::SuccessorGenerator &get_successor_generator(const TaskProxy &task_proxy) {
-    utils::g_log << "Building successor generator..." << flush;
-    int peak_memory_before = utils::get_peak_memory_in_kb();
-    utils::Timer successor_generator_timer;
-    successor_generator::SuccessorGenerator &successor_generator =
-        successor_generator::g_successor_generators[task_proxy];
-    successor_generator_timer.stop();
-    utils::g_log << "done!" << endl;
-    int peak_memory_after = utils::get_peak_memory_in_kb();
-    int memory_diff = peak_memory_after - peak_memory_before;
-    utils::g_log << "peak memory difference for successor generator creation: "
-                 << memory_diff << " KB" << endl
-                 << "time for successor generation creation: "
-                 << successor_generator_timer << endl;
-    return successor_generator;
-}
-
 SearchEngine::SearchEngine(const Options &opts)
     : status(IN_PROGRESS),
       solution_found(false),
       task(opts.get<shared_ptr<AbstractTask>>("transform")),
       task_proxy(*task),
       state_registry(task_proxy),
-      successor_generator(get_successor_generator(task_proxy)),
+      successor_generator(successor_generator::get_successor_generator(task_proxy)),
       search_space(state_registry),
       search_progress(opts.get<utils::Verbosity>("verbosity")),
       statistics(SearchStatistics(opts.get<utils::Verbosity>("verbosity"), opts.get<int>("max_expansions"))),

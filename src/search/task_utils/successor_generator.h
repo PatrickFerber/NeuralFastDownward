@@ -31,6 +31,9 @@ public:
 };
 
 extern PerTaskInformation<SuccessorGenerator> g_successor_generators;
+
+SuccessorGenerator &get_successor_generator(const TaskProxy &task_proxy);
+
 }
 
 #endif
