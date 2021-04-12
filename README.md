@@ -1,3 +1,72 @@
+# Neural Fast Downward
+Neural Fast Downward is intended to help with generating training data for
+classical planning domains, as well as, using machine learning techniques with
+Fast Downward (especially, Tensorflow and PyTorch). The code was quickly 
+refactored and updated to the current (March 2021) Fast Downward main branch.
+Thus, it was not as well tested as it should be. If you find any bugs, please
+contact me (patrick.ferber@unibas.ch) or create a pull request.
+
+Neural Fast Downward is a fork from Fast Downward. For more information related to
+Fast Downward, read the bottom part of this README.md.
+
+
+## Features
+### Sampling
+Neural Fast Downward implement a plugin type that takes a task as input and
+creates new states from its state space. Currently the following two techniques
+are implemented:
+- Random walks with progression from the initial state
+- Random walk with regression from the goal state
+
+Furthermore, a sampling engine is implemented that takes the above mentioned
+plugins evaluates the sampled states (produces for every state a vector of
+strings) and stores them to disk (in the future hopefully to named pipes). How 
+the states are evaluated depends on the concrete implementation of the 
+sampling engine. Examples are:
+- writing the new states as SAS tasks to disk
+- solving the states using a given search algorithm and storing the states along
+  the plan
+- store an estimate for a state by evaluating its n-step successors with a 
+  given heuristic function and back propagate the minimum estimate (similar to a
+  Bellman update).
+  
+If you are only interested in the sampling code, just work with the branch 
+`sampling`. The branch `main` contains the sampling feature, as well as, the
+features below.
+  
+### Policies
+Neural Fast Downward has some simple support for policies in classical planning.
+It does **not** implement a good policy, but it provides a Policy class which can
+be extended, two simple policies with internally rely on a given heuristic and
+a simple search engine which follows the choices of a policy.
+
+### Neural Networks
+Neural Fast Downward supports Tensorflow and PyTorch models. It implements an 
+abstract neural network base class and implements a network subclass for
+Tensorflow and PyTorch. If you want to support another ML library take 
+inspiration by those classes.
+
+Furthermore, a network heuristic and network policy are provided. Both are simple
+wrappers that take an abstract network and take the network outputs as heuristic
+resp. policy values.
+
+**Tensorflow.**
+The setup of Tensorflow has changed overtime. The code is still there, but I have
+not tried to get it running with the current version of Tensorflow. I am glad for
+PR that adapt the code for the current Tensorflow version (if any 
+changes are necessary) and for instructions I can upload for anyone who wants to
+compile their code with Tensorflow.
+After setting up Tensorflow, you have to uncomment the Tensorflow Plugin in
+`src/search/DownwardFiles.cmake`.
+
+**PyTorch.**
+Setting up PyTorch is straight forward. Download `torchlib` and extract it to
+any path `P`. Then set an environment variable `PATH_TORCH` that points to `P`.
+Afterwards, you have to uncomment the Torch Plugin in
+`src/search/DownwardFiles.cmake`.
+
+
+
 # Fast Downward
 
 Fast Downward is a domain-independent classical planning system.
