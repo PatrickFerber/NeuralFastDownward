@@ -37,8 +37,8 @@ features below.
 ### Policies
 Neural Fast Downward has some simple support for policies in classical planning.
 It does **not** implement a good policy, but it provides a Policy class which can
-be extended, two simple policies with internally rely on a given heuristic and
-a simple search engine which follows the choices of a policy.
+be extended. Currently, two simple policies which internally rely on a given heuristic and
+a simple search engine which follows the choices of a policy are implemented.
 
 ### Neural Networks
 Neural Fast Downward supports Tensorflow and PyTorch models. It implements an 
@@ -65,7 +65,7 @@ any path `P`. Then set an environment variable `PATH_TORCH` that points to `P`.
 Afterwards, you have to uncomment the Torch Plugin in
 `src/search/DownwardFiles.cmake`.
 
-
+[Click here for information on extending Neural Fast Downward](EXTENDING.md)
 
 # Fast Downward
 
