@@ -13,6 +13,11 @@
 using namespace std;
 
 namespace options {
+
+RawPredefinition::RawPredefinition(
+        const std::string key, const std::string raw, bool dry_run)
+        : key(key), raw(raw), dry_run(dry_run) {}
+
 static void print_initialization_errors_and_exit(const vector<string> &errors) {
     throw OptionParserError("\n" + utils::join(errors, "\n") + "\n" + get_demangling_hint("[TYPE]"));
 }
@@ -40,7 +45,7 @@ void Registry::insert_plugin_types(const RawRegistry &raw_registry,
     unordered_map<type_index, vector<string>> occurrences_types;
     unordered_map<string, vector<string>> occurrences_predefinition;
     for (const PluginTypeInfo &plugin_type_info :
-         raw_registry.get_plugin_type_data()) {
+            raw_registry.get_plugin_type_data()) {
         occurrences_names[plugin_type_info.type_name].push_back(plugin_type_info.type);
         occurrences_types[plugin_type_info.type].push_back(plugin_type_info.type_name);
         bool predefine_error = false;
@@ -268,16 +273,36 @@ void Registry::handle_predefinition(
     const string &key, const string &arg, Predefinitions &predefinitions,
     bool dry_run) {
     predefinition_functions.at(key)(arg, *this, predefinitions, dry_run, false);
-    predefinitions_raw[key].emplace_back(arg, dry_run);
-}
-void Registry::handle_repredefinition(
-        const string &key, Predefinitions &predefinitions) {
-    if (predefinitions_raw.count(key)){
-        for (auto elem : predefinitions_raw.at(key)) {
-            predefinition_functions.at(key)(
-                    elem.first, *this, predefinitions, elem.second, true);
-        }
-    }
+    predefinitions_raw_by_key[key].push_back(predefinitions_raw_ordered.size());
+    predefinitions_raw_ordered.emplace_back(key, arg, dry_run);
 
 }
+
+void Registry::handle_repredefinition(
+        const string &key, Predefinitions &predefinitions) {
+    if (predefinitions_raw_by_key.count(key)) {
+        for (size_t elem : predefinitions_raw_by_key.at(key)) {
+            predefinition_functions.at(key)(
+                    predefinitions_raw_ordered[elem].raw,
+                    *this, predefinitions,
+                    predefinitions_raw_ordered[elem].dry_run,
+                    true);
+        }
+    }
+}
+
+void Registry::handle_all_repredefinition(
+        Predefinitions &predefinitions, std::unordered_set<string> ignore) {
+    for (auto & predef: predefinitions_raw_ordered) {
+        if(ignore.count(predef.key) == 0) {
+            predefinition_functions.at(predef.key)(
+                    predef.raw,
+                    *this, predefinitions,
+                    predef.dry_run,
+                    true);
+        }
+    }
+}
+
+
 }

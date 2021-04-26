@@ -126,19 +126,6 @@ void SamplingSearch::add_entry(
 }
 
 
-static vector<int> get_n_of_N(int n, int N, utils::RandomNumberGenerator &rng) {
-    vector<int> result;
-    result.reserve(n);
-    for (int i = 0; i < n; ++i) {
-        int r;
-        do {
-            r = rng(N);
-        } while (find(std::begin(result), std::end(result), r) != std::end(result));
-        result.push_back(r);
-    }
-    return result;
-}
-
 
 /*
  store_init = store initial state of trajectory
@@ -172,7 +159,7 @@ int SamplingSearch::extract_entries_trajectories(
     } else {
         expand = false;
     }
-    vector<int> intermediate = get_n_of_N(store_intermediate, trajectory.size(), *rng);
+    vector<int> intermediate = rng->choose_n_of_N(store_intermediate, trajectory.size());
 
     size_t min_idx_goal = (expand) ? (1) : (trajectory.size() - 1);
 
@@ -246,13 +233,6 @@ int SamplingSearch::extract_entries_all_states(
 
 /* Methods to use in the constructor */
 
-
-options::ParseTree prepare_search_parse_tree(
-    const std::string &unparsed_config) {
-    options::ParseTree pt = options::generate_parse_tree(unparsed_config);
-    return subtree(pt, options::first_child_of_root(pt));
-}
-
 string construct_sample_file_header(
         const SampleFormat &sample_format,
         const string &field_separator) {
@@ -304,11 +284,7 @@ string construct_meta_heuristics(const vector<string> &use_evaluators) {
 
 /* Constructor */
 SamplingSearch::SamplingSearch(const options::Options &opts)
-    : SamplingStateEngine(opts),
-      search_parse_tree(prepare_search_parse_tree(opts.get_unparsed_config())),
-      registry(*opts.get_registry()),
-      predefinitions(*opts.get_predefinitions()),
-
+    : SamplingSearchBase(opts),
       store_solution_trajectories(opts.get<bool>("store_solution_trajectory")),
       store_other_trajectories(opts.get<bool>("store_other_trajectories")),
       store_all_states(opts.get<bool>("store_all_states")),
@@ -367,31 +343,6 @@ SamplingSearch::SamplingSearch(const options::Options &opts)
     }
 }
 
-
-void SamplingSearch::initialize() {
-    SamplingStateEngine::initialize();
-    cout << "Initializing Sampling Manager...";
-    cout << "done." << endl;
-}
-
-void SamplingSearch::next_engine() {
-    sampling_engine::paths.clear();
-    network_reload_count++;
-    if (network_reload_count >= network_reload_frequency) {
-        registry.handle_repredefinition("network", predefinitions);
-        network_reload_count = 0;
-    }
-    registry.handle_repredefinition("evaluator", predefinitions);
-    registry.handle_repredefinition("heuristic", predefinitions); //Aye this is not too safe...
-    ptr_use_evaluators.clear();
-    for (const string &name : use_evaluators) {
-        ptr_use_evaluators.push_back(
-            predefinitions.get<shared_ptr<Evaluator>>(name));
-    }
-    options::OptionParser engine_parser(
-        search_parse_tree, registry, predefinitions, false);
-    engine = engine_parser.start_parsing<shared_ptr < SearchEngine >> ();
-}
 
 vector<string> SamplingSearch::extract_samples() {
     /*For the sampling format, please take a look at sample_file_header*/
@@ -479,7 +430,26 @@ vector<string> SamplingSearch::extract_samples() {
     return new_entries;
 }
 
-void SamplingSearch::update_solved_log(vector<string> &samples) {
+
+void SamplingSearch::next_engine() {
+    network_reload_count++;
+    if (network_reload_count >= network_reload_frequency) {
+        ignore_repredefinitions.erase("network");
+        network_reload_count = 0;
+    }
+    SamplingSearchBase::next_engine();
+
+    ignore_repredefinitions.insert("network");
+
+    ptr_use_evaluators.clear();
+    for (const string &name : use_evaluators) {
+        ptr_use_evaluators.push_back(
+                predefinitions.get<shared_ptr<Evaluator>>(name));
+    }
+}
+
+
+void SamplingSearch::post_search(std::vector<std::string> &samples) {
     if ((*current_technique)->has_upgradeable_parameters()) {
         auto &history = successfully_solved_history.find((*current_technique)->id)->second;
         size_t nb_solved = successfully_solved.find((*current_technique)->id)->second;
@@ -511,24 +481,12 @@ void SamplingSearch::update_solved_log(vector<string> &samples) {
 
 }
 
-std::vector<std::string> SamplingSearch::sample(std::shared_ptr<AbstractTask> task) {
-    sampling_technique::modified_task = task;
-    next_engine();
-    engine->search();
-    vector<string> samples = extract_samples();
-    update_solved_log(samples);
-    return samples;
-}
 
 std::string SamplingSearch::sample_file_header() const {
     return constructed_sample_file_header;
 }
 
 void SamplingSearch::add_sampling_search_options(options::OptionParser &parser) {
-    parser.add_option<shared_ptr < SearchEngine >> (
-            "search",
-            "Search engine to use for sampling");
-
     // Sources for samples to store
     parser.add_option<bool> ("store_solution_trajectory",
                              "Stores for every state on the solution path which operator was chosen"

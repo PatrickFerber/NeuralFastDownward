@@ -14,7 +14,7 @@ namespace plugin_sampling {
 static shared_ptr<SearchEngine> _parse_sampling_search(OptionParser &parser) {
     parser.document_synopsis("Sampling Search Manager", "");
 
-
+    sampling_engine::SamplingSearchBase::add_sampling_search_base_options(parser);
     sampling_engine::SamplingSearch::add_sampling_search_options(parser);
     sampling_engine::SamplingEngine::add_sampling_options(parser);
     sampling_engine::SamplingStateEngine::add_sampling_state_options(

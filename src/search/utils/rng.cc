@@ -32,4 +32,17 @@ RandomNumberGenerator::~RandomNumberGenerator() { }
 void RandomNumberGenerator::seed(int seed) {
     rng.seed(seed);
 }
+
+vector<int> RandomNumberGenerator::choose_n_of_N(int n, int N) {
+    vector<int> result;
+    result.reserve(n);
+    for (int i = 0; i < n; ++i) {
+        int r;
+        do {
+            r = (*this)(N);
+        } while (find(std::begin(result), std::end(result), r) != std::end(result));
+        result.push_back(r);
+    }
+    return result;
+}
 }

@@ -9,12 +9,21 @@
 #include <string>
 #include <typeindex>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 
 namespace options {
 class OptionParser;
 class Predefinitions;
+
+struct RawPredefinition {
+    RawPredefinition(const std::string key, const std::string raw, bool dry_run);
+
+    const std::string key;
+    const std::string raw;
+    const bool dry_run;
+};
 
 class Registry {
     std::unordered_map<std::type_index, std::unordered_map<std::string, Any>> plugin_factories;
@@ -43,7 +52,9 @@ class Registry {
        Map from predefinition keyword to predefinition function.
     */
     std::unordered_map<std::string, PredefinitionFunction> predefinition_functions;
-    std::unordered_map<std::string, std::vector<std::pair<std::string, bool>>> predefinitions_raw;
+    std::vector<RawPredefinition> predefinitions_raw_ordered;
+    std::unordered_map<std::string, std::vector<size_t>> predefinitions_raw_by_key;
+
 
     void insert_plugin_types(const RawRegistry &raw_registry,
                              std::vector<std::string> &errors);
@@ -72,6 +83,8 @@ public:
     void handle_predefinition(const std::string &key, const std::string &arg,
                               Predefinitions &predefinitions, bool dry_run);
     void handle_repredefinition(const std::string &key, Predefinitions &predefinitions);
+    void handle_all_repredefinition(Predefinitions &predefinitions,
+                                    std::unordered_set<std::string> ignore_keys);
 
     const PluginTypeInfo &get_type_info(const std::type_index &type) const;
     std::vector<PluginTypeInfo> get_sorted_type_infos() const;

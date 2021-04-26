@@ -73,6 +73,8 @@ public:
     void shuffle(std::vector<T> &vec) {
         std::shuffle(vec.begin(), vec.end(), rng);
     }
+
+    std::vector<int> choose_n_of_N(int n, int N);
 };
 }
 

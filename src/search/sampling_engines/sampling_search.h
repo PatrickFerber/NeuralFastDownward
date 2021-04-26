@@ -1,7 +1,7 @@
 #ifndef SEARCH_ENGINES_SAMPLING_SEARCH_H
 #define SEARCH_ENGINES_SAMPLING_SEARCH_H
 
-#include "sampling_state_engine.h"
+#include "sampling_search_base.h"
 
 #include "../options/predefinitions.h"
 #include "../options/registries.h"
@@ -27,13 +27,8 @@ using ParseTree = tree<ParseNode>;
 
 namespace sampling_engine {
 
-class SamplingSearch : public SamplingStateEngine {
+class SamplingSearch : public SamplingSearchBase {
 protected:
-    // Internal
-    const options::ParseTree search_parse_tree;
-    options::Registry registry;
-    options::Predefinitions predefinitions;
-
     // Sample Sources
     const bool store_solution_trajectories;
     const bool store_other_trajectories;
@@ -58,17 +53,13 @@ protected:
     const std::string entry_meta_general;
     const std::string entry_meta_heuristics;
     
-    std::shared_ptr<SearchEngine> engine;
     std::vector<std::shared_ptr<Evaluator>> ptr_use_evaluators;
     utils::HashMap<int, size_t> successfully_solved;
     utils::HashMap<int, std::deque<bool>> successfully_solved_history;
     const size_t successfully_solved_history_size = 500;
     const size_t successfully_solved_increment_threshold = successfully_solved_history_size * 0.9;
     
-    /* Internal Methods*/
-    void next_engine();
-    void update_solved_log(std::vector<std::string> &samples);
-    std::vector<std::string> extract_samples();
+    virtual std::vector<std::string> extract_samples() override;
     std::string construct_meta(
             size_t modification_hash,
             const std::string &sample_type,
@@ -91,13 +82,9 @@ protected:
         const std::string &meta, StateID &sid,
         const std::string &goal_description);
     
-    /* Overwritten Methods*/
-    virtual void initialize() override;
-    std::vector<std::string> sample(
-        std::shared_ptr<AbstractTask> task) override;
+    void post_search(std::vector<std::string> &samples) override;
+    virtual void next_engine() override;
     virtual std::string sample_file_header() const override;
-
-    
 
 public:
     explicit SamplingSearch(const options::Options &opts);
