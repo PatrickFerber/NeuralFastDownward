@@ -14,7 +14,13 @@ namespace sampling_engine {
 
 class SamplingSearchSimple : public SamplingSearchBase {
 protected:
+    const bool store_plan_cost;
+    const bool store_state;
+    const bool store_operator;
+    const std::string header;
+
     virtual std::vector<std::string> extract_samples() override;
+    virtual std::string construct_header() const;
     virtual std::string sample_file_header() const override;
 
 
