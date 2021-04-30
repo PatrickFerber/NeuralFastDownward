@@ -1,21 +1,17 @@
-# Extending Neural Fast Downward
+# Neural Networks
+- Code: `src/search/neural_networks`
+- Base class: `AbstractNetwork`
 
-Of course, you can implement anything you like. For information about the
-code of Fast Downward, take a look at the 
-[Fast Downward repository](https://github.com/aibasel/downward).
+## The Basics
+`AbstractNetwork` defines the interface for all networks. Every network
+has to implement a function to evaluate a state and every network has to declare
+which outputs it provides (e.g. heuristic value and preferred operators), 
+as well as, provide access to the outputs.
 
-## Neural Networks
-### The Basics
-The code of all neural networks can be found in `src/search/neural_networks`.
-The class `AbstractNetwork` defines the interface for all networks. Every network
-has to implement a function to evaluate a state and every network has to inform
-which outputs it provides, as well as, provide access to the outputs (e.g. 
-heuristic value and preferred operators).
-
-### Adding a new output kind (e.g. confidence)
-If you want your network to output some new information, e.g. its confidence
+## Adding a new output type (e.g. confidence)
+If you want your network to output some new information, e.g. the confidence
 in its heuristic estimate, then you have to modify the `AbstractNetwork` class.
-You have to add the following four methods:
+Add the following four methods:
 - `is_FEATURE()`: This method denotes if the concrete network class produced 
   output for your feature. Its default implementation should return `false`.
 - `verify_FEATURE()`: This method shall terminate the executing, if the network
@@ -27,7 +23,7 @@ You have to add the following four methods:
   function. If `evaluate(State)` was called, then this function should return 
   a vector of size 1.
 
-### Adding support for a new ML framework
+## Adding support for a new ML framework
 
 First, I suggest that you make yourself familiar with the C++ API of your
 framework. Write a simple example file that loads a model of your framework,
@@ -50,11 +46,11 @@ I suggest that the input extraction and the output interpretation are done by
 abstract functions. Then, you can implement many different concrete networks
 for your framework.
 
-### Adding a new network
+## Adding a new network
 Decide which Machine Learning Framework you want to use. Then extend the base
 class for that framework, e.g. `ProtobufNetwork` for Tensorflow or `TorchNetwork`
 for PyTorch. Then implement the abstract methods of that base class. Often
-those are:
+those:
 - convert a state to the right input format for the network
 - parse the output of the network
 
