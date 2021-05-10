@@ -46,6 +46,17 @@ inline bool is_goal_assignment(
     return true;
 }
 
+inline bool is_strips_fact(const std::string &fact_name) {
+    return fact_name != "<none of those>" &&
+        fact_name.rfind("NegatedAtom", 0) == std::string::npos;
+}
+
+inline bool is_strips_fact(const AbstractTask *task, const FactPair &fact_pair) {
+    return is_strips_fact(task->get_fact_name(fact_pair));
+}
+
+extern std::vector<FactPair> get_strips_fact_pairs(const AbstractTask *task);
+
 /*
   Return true iff all operators have cost 1.
 

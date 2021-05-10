@@ -11,6 +11,19 @@ using utils::ExitCode;
 
 
 namespace task_properties {
+
+vector<FactPair> get_strips_fact_pairs(const AbstractTask *task) {
+    std::vector<FactPair> facts;
+    for (int var = 0; var < task->get_num_variables(); ++var) {
+        for (int val = 0; val < task->get_variable_domain_size(var); ++val) {
+            facts.emplace_back(var, val);
+            if (!task_properties::is_strips_fact(task, facts.back())) {
+                facts.pop_back();
+            }
+        }
+    }
+    return facts;
+}
 bool is_unit_cost(TaskProxy task) {
     for (OperatorProxy op : task.get_operators()) {
         if (op.get_cost() != 1)

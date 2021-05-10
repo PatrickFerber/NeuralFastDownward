@@ -6,6 +6,8 @@
 #include "../option_parser.h"
 #include "../plugin.h"
 
+#include "../task_utils/task_properties.h"
+
 #include <sstream>
 #include <string>
 
@@ -32,13 +34,8 @@ string SamplingSearchSimple::construct_header() const {
     }
     if (store_state) {
         oss << "#<State>=";
-        for (int var = 0; var < task->get_num_variables(); ++var) {
-            for (int val = 0; val < task->get_variable_domain_size(var); ++val) {
-                string fact_name = task->get_fact_name(FactPair(var, val));
-                if (fact_name != "<none of those>" && fact_name.rfind("NegatedAtom", 0) == string::npos) {
-                    oss << fact_name << state_separator;
-                }
-            }
+        for (const FactPair &fp: relevant_facts) {
+            oss << task->get_fact_name(fp) << state_separator;
         }
         oss.seekp(-1,oss.cur);
         oss << endl;
@@ -85,13 +82,8 @@ vector<string> SamplingSearchSimple::extract_samples() {
             State state = engine->get_state_registry().lookup_state(trajectory[idx_t]);
             state.unpack();
             vector<int> values = state.get_values();
-            for (int var = 0; var < task->get_num_variables(); ++var) {
-                for (int val = 0; val < task->get_variable_domain_size(var); ++val) {
-                    string fact_name = task->get_fact_name(FactPair(var, val));
-                    if (fact_name != "<none of those>" && fact_name.rfind("NegatedAtom", 0) == string::npos) {
-                        oss << (values[var] == val ? 1 : 0) << state_separator;
-                    }
-                }
+            for (const FactPair &fp: relevant_facts) {
+                oss << (values[fp.var] == fp.value ? 1 : 0) << state_separator;
             }
             oss.seekp(-1,oss.cur);
             oss << field_separator;
@@ -114,7 +106,7 @@ vector<string> SamplingSearchSimple::extract_samples() {
         s.pop_back();
         samples.push_back(s);
     }
-    samples.push_back("#---");
+    samples.push_back("# ---");
     return samples;
 }
 
@@ -124,6 +116,7 @@ SamplingSearchSimple::SamplingSearchSimple(const options::Options &opts)
       store_plan_cost(opts.get<bool>("store_plan_cost")),
       store_state(opts.get<bool>("store_state")),
       store_operator(opts.get<bool>("store_operator")),
+      relevant_facts(task_properties::get_strips_fact_pairs(task.get())),
       header(construct_header()){
 
 

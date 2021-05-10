@@ -17,6 +17,7 @@ protected:
     const bool store_plan_cost;
     const bool store_state;
     const bool store_operator;
+    const std::vector<FactPair> relevant_facts;
     const std::string header;
 
     virtual std::vector<std::string> extract_samples() override;
