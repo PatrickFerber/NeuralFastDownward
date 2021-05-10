@@ -7,6 +7,20 @@ be. Please report bugs to **patrick.ferber@unibas.ch** or create a pull request.
 For more information related to Fast Downward, consult the bottom part of 
 this README.md.
 
+If you use Neural Fast Downward in your research, please cite
+
+```
+@InProceedings{ferber-et-al-ecai2020,
+  author =       "Patrick Ferber and Malte Helmert and J{\"o}rg Hoffmann",
+  title =        "Neural Network Heuristics for Classical Planning: A Study of
+                  Hyperparameter Space",
+  pages =        "2346--2353",
+  booktitle =    "Proceedings of the 24th {European} Conference on
+                  {Artificial} {Intelligence} ({ECAI} 2020)",
+  year =         "2020"
+}
+```
+
 
 ## Features
 ### Sampling
