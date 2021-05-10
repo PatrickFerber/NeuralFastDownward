@@ -523,6 +523,7 @@ fast_downward_plugin(
 #        SOURCES
 #        neural_networks/torch_network
 #        neural_networks/test_torch_network
+#        neural_networks/torch_state_network
 #        DEPENDS NEURAL_NETWORKS
 #        PACKAGES Torch
 #)

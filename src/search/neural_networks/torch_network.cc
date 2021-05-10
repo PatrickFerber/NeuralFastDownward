@@ -29,6 +29,10 @@ void TorchNetwork::evaluate(const State &state) {
 }
 
 void TorchNetwork::evaluate(const vector<State> &states) {
+    cerr << "Evaluating batches of samples is currently not working for Torch."
+         << endl;
+    utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
+
     clear_output();
     vector<vector<at::Tensor>> samples;
     for (auto &state : states) {
@@ -50,12 +54,12 @@ void TorchNetwork::evaluate(const vector<State> &states) {
 }
 
 void TorchNetwork::add_options_to_parser(options::OptionParser &parser) {
+    parser.add_option<string>("path", "Path to networks protobuf file.");
     parser.add_option<shared_ptr<AbstractTask>>(
         "transform",
         "Optional task transformation for the network."
         " Currently, adapt_costs(), sampling_transform(), and no_transform() are "
         "available.",
         "no_transform()");
-    parser.add_option<string>("path", "Path to networks protobuf file.");
 }
 }
