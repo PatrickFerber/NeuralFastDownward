@@ -100,6 +100,7 @@ void SamplingEngine::update_current_technique() {
 }
 
 SearchStatus SamplingEngine::step() {
+    assert(!finalize);
     update_current_technique();
     if (current_technique == sampling_techniques.end()) {
         finalize = true;
@@ -130,6 +131,9 @@ void SamplingEngine::print_statistics() const {
 }
 
 void SamplingEngine::save_plan_if_necessary() {
+    if (get_status() != SearchStatus::IN_PROGRESS) {
+        finalize = true;
+    }
     assert(finalize || sample_cache_size >= max_sample_cache_size);
     while ((finalize || sample_cache_size >= max_sample_cache_size) &&
            sample_cache_size > 0 &&
