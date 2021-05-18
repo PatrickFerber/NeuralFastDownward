@@ -7,6 +7,7 @@
 
 #include "../task_utils/successor_generator.h"
 #include "../task_utils/task_properties.h"
+#include "../utils/logging.h"
 
 #include <algorithm>
 #include <iostream>
@@ -37,20 +38,28 @@ SamplingSearchBase::SamplingSearchBase(const options::Options &opts)
 
 
 void SamplingSearchBase::next_engine() {
+    utils::g_log.silence = true;
     sampling_engine::paths.clear();
     registry.handle_all_repredefinition(predefinitions, ignore_repredefinitions);
 
     options::OptionParser engine_parser(
         search_parse_tree, registry, predefinitions, false);
     engine = engine_parser.start_parsing<shared_ptr < SearchEngine >> ();
+    utils::g_log.silence = false;
 }
 
 std::vector<std::string> SamplingSearchBase::sample(std::shared_ptr<AbstractTask> task) {
+    utils::g_log << "." << flush;
     sampling_technique::modified_task = task;
     next_engine();
+    utils::g_log.silence = true;
     engine->search();
-    vector<string> samples = extract_samples();
-    post_search(samples);
+    utils::g_log.silence = false;
+    vector<string> samples;
+    if (engine->found_solution()) {
+        samples = extract_samples();
+        post_search(samples);
+    }
     return samples;
 }
 

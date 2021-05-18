@@ -25,26 +25,35 @@ private:
     bool line_has_started = false;
 
 public:
+    bool silence = false;
     template<typename T>
     Log &operator<<(const T &elem) {
-        if (!line_has_started) {
-            line_has_started = true;
-            std::cout << "[t=" << g_timer << ", "
-                      << get_peak_memory_in_kb() << " KB] ";
-        }
+        if (silence){
+            return *this;
+        } else {
+            if (!line_has_started) {
+                line_has_started = true;
+                std::cout << "[t=" << g_timer << ", "
+                          << get_peak_memory_in_kb() << " KB] ";
+            }
 
-        std::cout << elem;
-        return *this;
+            std::cout << elem;
+            return *this;
+        }
     }
 
     using manip_function = std::ostream &(*)(std::ostream &);
     Log &operator<<(manip_function f) {
-        if (f == static_cast<manip_function>(&std::endl)) {
-            line_has_started = false;
-        }
+        if (silence) {
+            return *this;
+        } else {
+            if (f == static_cast<manip_function>(&std::endl)) {
+                line_has_started = false;
+            }
 
-        std::cout << f;
-        return *this;
+            std::cout << f;
+            return *this;
+        }
     }
 };
 
