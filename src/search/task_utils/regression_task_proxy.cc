@@ -98,13 +98,14 @@ bool RegressionOperator::is_applicable(const PartialAssignment &assignment) cons
 }
 
 
-inline vector<RegressionOperator> extract_regression_operators(const AbstractTask &task, TaskProxy &tp) {
+inline shared_ptr<vector<RegressionOperator>> extract_regression_operators(const AbstractTask &task, TaskProxy &tp) {
     task_properties::verify_no_axioms(tp);
     task_properties::verify_no_conditional_effects(tp);
 
-    vector<RegressionOperator> rops;
+    auto rops = make_shared<vector<RegressionOperator>>();
     for (OperatorProxy op : OperatorsProxy(task)) {
-        rops.emplace_back(op);
+        RegressionOperator o(op);
+        rops->emplace_back(op);
     }
     return rops;
 }

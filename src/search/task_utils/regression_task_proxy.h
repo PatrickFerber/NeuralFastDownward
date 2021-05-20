@@ -327,18 +327,23 @@ public:
 
 class RegressionOperatorProxy {
     const AbstractTask *task;
-    const RegressionOperator op;
+    const std::shared_ptr<std::vector<RegressionOperator>> ops;
+    const size_t index;
     bool is_an_axiom;
 public:
 
-    RegressionOperatorProxy(const AbstractTask &task, const RegressionOperator &op)
-        : task(&task), op(op), is_an_axiom(false) {
+    RegressionOperatorProxy(
+            const AbstractTask &task,
+            const std::shared_ptr<std::vector<RegressionOperator>> &ops,
+            const size_t index)
+        : task(&task), ops(ops), index(index), is_an_axiom(false) {
     }
     ~RegressionOperatorProxy() = default;
 
     bool operator==(const RegressionOperatorProxy &other) const {
         assert(task == other.task);
-        return op == other.op && is_an_axiom == other.is_an_axiom;
+        return ops.get()[index] == other.ops.get()[index] &&
+                is_an_axiom == other.is_an_axiom;
     }
 
     bool operator!=(const RegressionOperatorProxy &other) const {
@@ -346,19 +351,19 @@ public:
     }
 
     RegressionConditionsProxy get_preconditions() const {
-        return RegressionConditionsProxy(*task, op.preconditions);
+        return RegressionConditionsProxy(*task, (*ops)[index].preconditions);
     }
 
     RegressionEffectsProxy get_effects() const {
-        return RegressionEffectsProxy(*task, op.effects);
+        return RegressionEffectsProxy(*task, (*ops)[index].effects);
     }
 
     std::set<int> get_original_effect_vars() const {
-        return op.original_effect_vars;
+        return (*ops)[index].original_effect_vars;
     }
 
     int get_cost() const {
-        return op.cost;
+        return (*ops)[index].cost;
     }
 
     bool is_axiom() const {
@@ -366,41 +371,41 @@ public:
     }
 
     int get_id() const {
-        return op.original_index;
+        return (*ops)[index].original_index;
     }
 
     std::string get_name() const {
-        return "Regression" + task->get_operator_name(get_id(), op.is_an_axiom);
+        return "Regression" + task->get_operator_name(get_id(), (*ops)[index].is_an_axiom);
     }
 
     bool achieves_subgoal(const PartialAssignment &assignment) const {
-        return op.achieves_subgoal(assignment);
+        return (*ops)[index].achieves_subgoal(assignment);
     }
 
     bool is_applicable(const PartialAssignment &assignment) const {
-        return op.is_applicable(assignment);
+        return (*ops)[index].is_applicable(assignment);
     }
 
     PartialAssignment get_anonym_predecessor(const PartialAssignment &assignment) {
-        return op.get_anonym_predecessor(assignment);
+        return (*ops)[index].get_anonym_predecessor(assignment);
     }
 };
 
 class RegressionOperatorsProxy {
-    const AbstractTask *task;
-    const std::vector<RegressionOperator> ops;
+    const AbstractTask &task;
+    const std::shared_ptr<std::vector<RegressionOperator>> ops;
 
 public:
     using ItemType = RegressionOperatorProxy;
 
     RegressionOperatorsProxy(const AbstractTask &task,
-                             const std::vector<RegressionOperator> &ops)
-        : task(&task), ops(ops) {
+                             const std::shared_ptr<std::vector<RegressionOperator>> ops)
+        : task(task), ops(ops) {
     }
     ~RegressionOperatorsProxy() = default;
 
     std::size_t size() const {
-        return ops.size();
+        return ops->size();
     }
 
     bool empty() const {
@@ -409,12 +414,12 @@ public:
 
     RegressionOperatorProxy operator[](std::size_t op_index) const {
         assert(op_index < size());
-        return RegressionOperatorProxy(*task, ops[op_index]);
+        return RegressionOperatorProxy(task, ops, op_index);
     }
 };
 
 class RegressionTaskProxy : public TaskProxy {
-    const std::vector<RegressionOperator> operators;
+    const std::shared_ptr<std::vector<RegressionOperator>> operators;
 public:
 
     explicit RegressionTaskProxy(const AbstractTask &task);
@@ -439,14 +444,14 @@ public:
     }
 
     RegressionOperatorProxy get_regression_operator(const std::size_t index) const {
-        assert(index < operators.size());
-        return RegressionOperatorProxy(*task, operators[index]);
+        assert(index < operators->size());
+        return RegressionOperatorProxy(*task, operators, index);
     }
 
     RegressionOperatorProxy get_regression_operator(const OperatorID &id) const {
-        assert(utils::in_bounds(id.get_index(), operators));
-        assert(operators[id.get_index()].get_original_index() == id.get_index());
-        return RegressionOperatorProxy(*task, operators[id.get_index()]);
+        assert(utils::in_bounds(id.get_index(), *operators));
+        assert((*operators)[id.get_index()].get_original_index() == id.get_index());
+        return RegressionOperatorProxy(*task, operators, id.get_index());
     }
 
 
