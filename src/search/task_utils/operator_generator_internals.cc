@@ -284,7 +284,7 @@ OperatorID GeneratorSwitchSingle::generate_min_applicable_op(
 }
 void GeneratorSwitchSingle::generate_applicable_ops(
     const vector<int> &state, vector<OperatorID> &applicable_ops) const {
-    if (value == state[switch_var_id]) {
+    if (value == state[switch_var_id] || state[switch_var_id] == PartialAssignment::UNASSIGNED) {
         generator_for_value->generate_applicable_ops(state, applicable_ops);
     }
 }
