@@ -46,7 +46,6 @@ void SamplingSearchBase::next_engine() {
     options::OptionParser engine_parser(
         search_parse_tree, registry, predefinitions, false);
     engine = engine_parser.start_parsing<shared_ptr < SearchEngine >> ();
-    cout << timer->get_remaining_time() << endl;
     if (engine->get_max_time() > timer->get_remaining_time()) {
         engine->reduce_max_time(timer->get_remaining_time());
     }
