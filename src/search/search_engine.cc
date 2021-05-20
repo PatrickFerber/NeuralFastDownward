@@ -10,11 +10,11 @@
 #include "task_utils/task_properties.h"
 #include "tasks/root_task.h"
 #include "task_utils/successor_generator.h"
-#include "utils/countdown_timer.h"
 #include "utils/logging.h"
 #include "utils/rng_options.h"
 #include "utils/system.h"
 #include "utils/timer.h"
+#include "utils/countdown_timer.h"
 
 #include <cassert>
 #include <iostream>
@@ -39,6 +39,7 @@ SearchEngine::SearchEngine(const Options &opts)
       cost_type(opts.get<OperatorCost>("cost_type")),
       is_unit_cost(task_properties::is_unit_cost(task_proxy)),
       max_time(opts.get<double>("max_time")),
+      timer(nullptr),
       verbosity(opts.get<utils::Verbosity>("verbosity")) {
     if (opts.get<int>("bound") < 0) {
         cerr << "error: negative cost bound " << opts.get<int>("bound") << endl;
@@ -100,8 +101,9 @@ const TaskProxy &SearchEngine::get_task_proxy() const {
 
 void SearchEngine::search() {
     initialize();
-    utils::CountdownTimer timer(max_time);
-    double last_statistic_time  = timer.get_elapsed_time();
+    assert(!timer);
+    timer = make_unique<utils::CountdownTimer>(max_time);
+    double last_statistic_time  = timer->get_elapsed_time();
     while (status == IN_PROGRESS) {
         try {
             status = step();
@@ -110,19 +112,19 @@ void SearchEngine::search() {
                 << endl;
             break;
         }
-        if (timer.is_expired()) {
+        if (timer->is_expired()) {
             utils::g_log << "Time limit reached. Abort search." << endl;
             status = TIMEOUT;
             break;
         }
         if(statistics_interval > 0 &&
-           timer.get_elapsed_time() - last_statistic_time > statistics_interval) {
+           timer->get_elapsed_time() - last_statistic_time > statistics_interval) {
             print_timed_statistics();
-            last_statistic_time = timer.get_elapsed_time();
+            last_statistic_time = timer->get_elapsed_time();
         }
     }
     // TODO: Revise when and which search times are logged.
-    utils::g_log << "Actual search time: " << timer.get_elapsed_time() << endl;
+    utils::g_log << "Actual search time: " << timer->get_elapsed_time() << endl;
 }
 
 bool SearchEngine::check_goal_and_set_plan(const State &state) {
@@ -147,6 +149,21 @@ int SearchEngine::get_adjusted_cost(const OperatorProxy &op) const {
     return get_adjusted_action_cost(op, cost_type, is_unit_cost);
 }
 
+double SearchEngine::get_max_time() {
+    return max_time;
+}
+void SearchEngine::reduce_max_time(double new_max_time) {
+    if (timer) {
+        cerr << "The time limit of a search cannot be reduced after it was"
+                "started" << endl;
+        utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
+    } else if (new_max_time > max_time){
+        cerr << "You cannot increase the time limit of a search!" << endl;
+        utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
+    } else {
+        max_time = new_max_time;
+    }
+}
 /* TODO: merge this into add_options_to_parser when all search
          engines support pruning.
 

@@ -27,6 +27,7 @@ class SuccessorGenerator;
 }
 
 namespace utils {
+class CountdownTimer;
 enum class Verbosity;
 }
 
@@ -55,6 +56,7 @@ protected:
     OperatorCost cost_type;
     bool is_unit_cost;
     double max_time;
+    std::unique_ptr<utils::CountdownTimer> timer;
     const utils::Verbosity verbosity;
 
     virtual void initialize() {}
@@ -81,6 +83,8 @@ public:
     void set_bound(int b) {bound = b;}
     int get_bound() {return bound;}
     PlanManager &get_plan_manager() {return plan_manager;}
+    double get_max_time();
+    void reduce_max_time(double new_max_time);
 
     /* The following three methods should become functions as they
        do not require access to private/protected class members. */

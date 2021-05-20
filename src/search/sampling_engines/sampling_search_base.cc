@@ -7,6 +7,7 @@
 
 #include "../task_utils/successor_generator.h"
 #include "../task_utils/task_properties.h"
+#include "../utils/countdown_timer.h"
 #include "../utils/logging.h"
 
 #include <algorithm>
@@ -45,6 +46,10 @@ void SamplingSearchBase::next_engine() {
     options::OptionParser engine_parser(
         search_parse_tree, registry, predefinitions, false);
     engine = engine_parser.start_parsing<shared_ptr < SearchEngine >> ();
+    cout << timer->get_remaining_time() << endl;
+    if (engine->get_max_time() > timer->get_remaining_time()) {
+        engine->reduce_max_time(timer->get_remaining_time());
+    }
     utils::g_log.silence = false;
 }
 
