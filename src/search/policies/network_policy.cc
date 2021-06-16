@@ -21,7 +21,6 @@ NetworkPolicy::NetworkPolicy(const Options &opts)
     network->initialize();
     cerr << "This code was never tested and is here as inspiration for some"
             "policy projects." << endl;
-    utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
 }
 
 NetworkPolicy::~NetworkPolicy() {
@@ -32,6 +31,16 @@ PolicyResult NetworkPolicy::compute_policy(const State &state) {
     PolicyResult result;
     const ordered_set::OrderedSet<OperatorID> &prefs = network->get_preferred();
     result.set_preferred_operators(vector<OperatorID>(prefs.begin(), prefs.end()));
+    vector<float> opPrefs = network->get_operator_preferences();
+
+    for (int i = 0; i < prefs.size(); i++) {
+        OperatorID op = prefs[i];
+        auto op_proxy = task_proxy.get_operators()[op];
+        if (!task_properties::is_applicable(op_proxy, state)) {
+            opPrefs[i] = 0.0;
+        }
+    }
+    result.set_operator_preferences(move(opPrefs));
     return result;
 }
 

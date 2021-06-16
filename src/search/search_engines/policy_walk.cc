@@ -131,6 +131,8 @@ namespace search_engines {
             SearchNode succ_node = search_space.get_node(succ_state);
             statistics.inc_generated();
 
+            cout << "Policy selected operator " << op_proxy.get_name() << endl;
+
             // succ_node cannot be flagged as dead end, because then we would
             // have evaluated it earlier and stopped the search.
             eval_context = EvaluationContext(
@@ -172,8 +174,7 @@ namespace search_engines {
                         "reached in the policy walk" << endl;
                 utils::exit_with(ExitCode::SEARCH_CRITICAL_ERROR);
             }
-            cout << "Policy reached state with id " << succ_state.get_id()
-                 << " by applying op " << op_proxy.get_name() << endl;
+
             current_state = move(succ_state);
             trajectory_length++;
             return IN_PROGRESS;
@@ -200,12 +201,12 @@ namespace search_engines {
             "operator_selection",
             "Selection mode for operators. Choose 'first' to select always"
             "the first operator with the highest probability. 'best' to select"
-            "a random operator withthe highest probability, or 'probability' to"
+            "a random operator with the highest probability, or 'probability' to"
             "select operators depending on their probability.",
             "first");
         parser.add_option<bool> (
                 "reopen",
-                "Reopen nodes alredy visisted. This makes only sense if "
+                "Reopen nodes already visited. This makes only sense if "
                 "either the policy is not deterministic or the walk is not "
                 "deterministic.", "false");
         SearchEngine::add_options_to_parser(parser);

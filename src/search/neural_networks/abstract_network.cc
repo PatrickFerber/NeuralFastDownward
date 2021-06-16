@@ -89,6 +89,11 @@ vector<ordered_set::OrderedSet<OperatorID>> &AbstractNetwork::get_preferreds() {
     utils::exit_with(utils::ExitCode::SEARCH_UNSUPPORTED);
 }
 
+std::vector<float> &AbstractNetwork::get_operator_preferences() {
+    cerr << "Network does not support preferred operator preferences." << endl
+         << "Terminating." << endl;
+    utils::exit_with(utils::ExitCode::SEARCH_UNSUPPORTED);
+}
 
 static PluginTypePlugin<AbstractNetwork> _type_plugin(
 "AbstractNetwork",

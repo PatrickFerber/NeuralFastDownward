@@ -62,7 +62,7 @@ public:
     void verify_preferred();
     virtual ordered_set::OrderedSet<OperatorID> &get_preferred();
     virtual std::vector<ordered_set::OrderedSet<OperatorID>> &get_preferreds();
-
+    virtual std::vector<float> &get_operator_preferences();
 };
 }
 
