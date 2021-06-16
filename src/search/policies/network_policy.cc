@@ -19,8 +19,6 @@ NetworkPolicy::NetworkPolicy(const Options &opts)
     cout << "Initializing network policy..." << endl;
     network->verify_preferred();
     network->initialize();
-    cerr << "This code was never tested and is here as inspiration for some"
-            "policy projects." << endl;
 }
 
 NetworkPolicy::~NetworkPolicy() {
@@ -31,8 +29,8 @@ PolicyResult NetworkPolicy::compute_policy(const State &state) {
     PolicyResult result;
     const ordered_set::OrderedSet<OperatorID> &prefs = network->get_preferred();
     result.set_preferred_operators(vector<OperatorID>(prefs.begin(), prefs.end()));
-    vector<float> opPrefs = network->get_operator_preferences();
 
+    vector<float> opPrefs = network->get_operator_preferences();
     for (int i = 0; i < prefs.size(); i++) {
         OperatorID op = prefs[i];
         auto op_proxy = task_proxy.get_operators()[op];

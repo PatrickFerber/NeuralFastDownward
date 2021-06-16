@@ -11,6 +11,8 @@ using namespace std;
 namespace neural_networks {
     TorchPolicyNetwork::TorchPolicyNetwork(const Options &opts) : TorchNetwork(opts),
             relevant_facts(task_properties::get_strips_fact_pairs(task.get())) {
+        // The network is expected to output a preference for EVERY grounded
+        // operator, thus, the list of preferred operators is always the same.
         for (auto o : task_proxy.get_operators()) {
             OperatorID id = OperatorID(o.get_id());
             this->last_preferred.insert(id);
@@ -34,29 +36,25 @@ namespace neural_networks {
         at::Tensor tensor = output.toTensor();
         auto accessor = tensor.accessor<float, 2>();
         for(int j = 0; j < accessor.size(1); j++) {
-            //cout << task_proxy.get_operators()[j].get_name() << " " << accessor[0][j] << endl;
-            last_operator_preferences.push_back(accessor[0][j]);
+            last_preferences.push_back(accessor[0][j]);
         }
+        assert(last_preferences.size() == (size_t) last_preferred.size());
     }
 
     void TorchPolicyNetwork::clear_output() {
-        last_operator_preferences.clear();
-    }
-
-    bool TorchPolicyNetwork::is_heuristic() {
-        return false;
+        last_preferences.clear();
     }
 
     bool TorchPolicyNetwork::is_preferred() {
-        return true; // TODO: what to do here?
+        return true;
     }
 
     ordered_set::OrderedSet<OperatorID> &TorchPolicyNetwork::get_preferred() {
-        return this->last_preferred;
+        return last_preferred;
     }
 
     std::vector<float> &TorchPolicyNetwork::get_operator_preferences() {
-        return this->last_operator_preferences;
+        return last_preferences;
     }
 }
 
@@ -64,7 +62,7 @@ static shared_ptr<neural_networks::AbstractNetwork> _parse(OptionParser &parser)
     parser.document_synopsis(
             "Torch Policy Network",
             "Takes a trained PyTorch model and evaluates it on a given state."
-            "The output is read as and provided as an action decision.");
+            "The output is interpreted as action preferences.");
     neural_networks::TorchNetwork::add_options_to_parser(parser);
     Options opts = parser.parse();
 
