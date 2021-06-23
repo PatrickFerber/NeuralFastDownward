@@ -4,11 +4,26 @@
 
 using namespace std;
 namespace neural_networks {
+
+inline bool check_file_existance(const std::string& name) {
+    if (FILE *file = fopen(name.c_str(), "r")) {
+        fclose(file);
+        return true;
+    } else {
+        return false;
+    }
+}
+
 TorchNetwork::TorchNetwork(const Options &opts)
     : AbstractNetwork(),
       task(opts.get<shared_ptr<AbstractTask>>("transform")),
       task_proxy(*task),
-      path(opts.get<string>("path")) {}
+      path(opts.get<string>("path")) {
+    if (!check_file_existance(path)) {
+        cerr << "Model file does not exists: " << path << endl;
+        utils::exit_with(utils::ExitCode::SEARCH_CRITICAL_ERROR);
+    }
+}
 
 TorchNetwork::~TorchNetwork() {}
 
