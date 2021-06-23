@@ -130,7 +130,7 @@ std::vector<FactPair> get_fact_mapping(
             order.push_back(iter->second);
         }
     }
-    cout << "Number of unknown facts: << not_found << endl;
+    cout << "Number of unknown facts:" << not_found << endl;
     return order;
 }
 
