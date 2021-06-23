@@ -64,6 +64,15 @@ public:
     virtual std::vector<ordered_set::OrderedSet<OperatorID>> &get_preferreds();
     virtual std::vector<float> &get_operator_preferences();
 };
+
+
+std::vector<FactPair> get_fact_mapping(
+        const AbstractTask *task, const std::vector<std::string> &facts);
+std::vector<int> get_default_inputs(
+        const std::vector<std::string> &default_inputs);
+void check_facts_and_default_inputs(
+        const std::vector<FactPair> &relevant_facts,
+        const std::vector<int> &default_input_values);
 }
 
 #endif /* NEURAL_NETWORKS_NEURAL_NETWORK_H */

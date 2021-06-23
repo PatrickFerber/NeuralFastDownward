@@ -19,7 +19,10 @@ TorchStateNetwork::TorchStateNetwork(const Options &opts)
     : TorchNetwork(opts),
       heuristic_shift(opts.get<int>("shift")),
       heuristic_multiplier(opts.get<int>("multiplier")),
-      relevant_facts(task_properties::get_strips_fact_pairs(task.get())) {}
+      relevant_facts(get_fact_mapping(task.get(), opts.get_list<string>("facts"))),
+      default_input_values(get_default_inputs(opts.get_list<string>("defaults"))) {
+    check_facts_and_default_inputs(relevant_facts, default_input_values);
+}
 
 TorchStateNetwork::~TorchStateNetwork() {}
 
@@ -45,7 +48,12 @@ vector<at::Tensor> TorchStateNetwork::get_input_tensors(const State &state) {
     auto accessor = tensor.accessor<float, 2>();
     size_t idx = 0;
     for (const FactPair &fp: relevant_facts) {
-        accessor[0][idx++] = values[fp.var] == fp.value;
+        if (fp == FactPair::no_fact) {
+            accessor[0][idx] = default_input_values[idx];
+        } else {
+            accessor[0][idx] = values[fp.var] == fp.value;
+        }
+        idx++;
     }
     return {tensor};
 }
@@ -80,6 +88,16 @@ static shared_ptr<neural_networks::AbstractNetwork> _parse(OptionParser &parser)
             "Multiply the predicted (and shifted) heuristic value (useful, if "
             "the model predicts small float values, but heuristics have to be "
             "integers", "1");
+    parser.add_list_option<string>(
+            "facts",
+            "if the SAS facts after translation can differ from the facts"
+            "during training (e.g. some are pruned or their order changed),"
+            "provide here the order of facts during training.",
+            "[]");
+    parser.add_list_option<string>(
+            "defaults",
+            "Default values for the facts given in option 'facts'",
+            "[]");
     Options opts = parser.parse();
 
     shared_ptr<neural_networks::TorchStateNetwork> network;

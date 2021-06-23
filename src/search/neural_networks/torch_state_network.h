@@ -12,6 +12,7 @@ protected:
     const int heuristic_shift;
     const int heuristic_multiplier;
     const std::vector<FactPair> relevant_facts;
+    const std::vector<int> default_input_values;
 
     int last_h = Heuristic::NO_VALUE;
     std::vector<int> last_h_batch;

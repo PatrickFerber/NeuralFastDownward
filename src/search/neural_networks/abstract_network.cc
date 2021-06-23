@@ -2,6 +2,9 @@
 
 #include "../plugin.h"
 
+#include "../task_utils/task_properties.h"
+
+#include <algorithm>
 #include <iostream>
 
 using namespace std;
@@ -100,4 +103,69 @@ static PluginTypePlugin<AbstractNetwork> _type_plugin(
 // TODO: Replace empty string by synopsis for the wiki page.
 "");
 
+
+std::vector<FactPair> get_fact_mapping(
+        const AbstractTask *task, const vector<string> &facts) {
+    if (facts.empty()) {
+        return task_properties::get_strips_fact_pairs(task);
+    }
+
+    unordered_map<string, FactPair> name2factpair;
+    for (const FactPair &fp: task_properties::get_strips_fact_pairs(task)) {
+        string fact_name = task->get_fact_name(fp);
+        fact_name = options::stringify_tree(options::generate_parse_tree(fact_name));
+        name2factpair.insert({fact_name, fp});
+    }
+
+    vector<FactPair> order;
+    int not_found = 0;
+    for (const string &fact: facts) {
+        auto iter = name2factpair.find(fact);
+        if (iter == name2factpair.end()) {
+            not_found++;
+            cout << "Unknown fact: " << task->get_fact_name(iter->second)
+                 << endl;
+            order.push_back(FactPair::no_fact);
+        } else {
+            order.push_back(iter->second);
+        }
+    }
+    cout << "Number of unknown facts: << not_found << endl;
+    return order;
+}
+
+std::vector<int> get_default_inputs(
+        const std::vector<std::string> &default_inputs) {
+    vector<int> converted;
+    converted.reserve(default_inputs.size());
+    transform(default_inputs.begin(), default_inputs.end(),
+              back_inserter(converted),
+              [](const std::string& str) { return std::stoi(str); });
+    return converted;
+}
+
+void check_facts_and_default_inputs(
+        const vector<FactPair> &relevant_facts,
+        const vector<int> &default_input_values) {
+    if (default_input_values.empty()) {
+        if (any_of(relevant_facts.begin(), relevant_facts.end(),
+                   [](const FactPair &fp){
+                       return fp == FactPair::no_fact;})) {
+            cerr << "If no default values are given for the facts, then"
+                    "every specified fact has to be present in the given"
+                    "SAS task." << endl;
+            utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
+        }
+    } else {
+        if (default_input_values.size() != relevant_facts.size()) {
+
+            cerr << "If default values are given for the facts, then exactly one"
+                    "value has to be given for every (STRIPS) fact (facts: "
+                 << relevant_facts.size()
+                 << ", default values: " << default_input_values.size()
+                 << endl;
+            utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
+        }
+    }
+}
 }
