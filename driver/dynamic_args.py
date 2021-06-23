@@ -24,12 +24,22 @@ MODEL_OUTPUT_LAYER_ANKER1 = b"Identity"
 MODEL_OUTPUT_LAYER_ANKER2 = b"*"
 
 
+def get_task_file(args):
+    if len(args.translate_inputs) > 0:
+        return args.translate_inputs[-1]
+    else:
+        assert len(args.filenames) == 1
+        return args.filenames[0]
+
+
 class Placeholders(object):
     PDIR = "PDIR"  # Problem file directory
     DDIR = "DDIR"  # Domain file directory
     FOLD = "FOLD"  # Determine fold to which the problem belongs (10 fold out of 200 started indexing by 1)
     PDDL_ATOMS = "PDDL_ATOMS"
     PDDL_INIT = "PDDL_INITS"
+    SAS_FACTS = "SAS_FACTS"
+    SAS_INIT = "SAS_INITS"
     SPLIT = "SPLIT"
     MODEL_OUTPUT_LAYER = "MODEL_OUTPUT_LAYER"
 
@@ -61,14 +71,14 @@ class Placeholders(object):
         for key in keys:
             if key == Placeholders.PDIR:
                 assert len(args.translate_inputs) == 2
-                v = os.path.dirname(args.translate_inputs[1])
+                v = os.path.dirname(get_task_file(args))
 
             elif key == Placeholders.DDIR:
                 assert len(args.translate_inputs) == 2
                 v = os.path.dirname(args.translate_inputs[0])
 
             elif key == Placeholders.FOLD:
-                match = PATTERN_PROBLEM_IDX.match(args.translate_inputs[1])
+                match = PATTERN_PROBLEM_IDX.match(get_task_file(args))
                 if match is None:
                     raise ValueError("Can only use {%s} with problem files of "
                                      "of the schema '%s'." %
@@ -80,10 +90,20 @@ class Placeholders(object):
                                      "(inclusive).")
                 v = int(math.floor((idx - 1) / 20.0))
 
-            elif key.startswith(Placeholders.PDDL_INIT):
+            elif key.startswith(Placeholders.PDDL_ATOMS) or key == Placeholders.SAS_FACTS:
                 if atom_lists is None:
-                    atom_lists = load_atom_list(path_problem=args.translate_inputs[1])
-                new_key = key.replace(Placeholders.PDDL_INIT, Placeholders.PDDL_ATOMS, 1)
+                    atom_lists = load_atom_list(path_problem=get_task_file(args))
+                if key not in atom_lists:
+                    raise ValueError("Cannot find %s in the associated atom list" % key)
+                v = "[" + ",".join(atom_lists[key])+"]"
+
+            elif key.startswith(Placeholders.PDDL_INIT) or key == Placeholders.SAS_INIT:
+                if atom_lists is None:
+                    atom_lists = load_atom_list(path_problem=get_task_file(args))
+                if key == Placeholders.SAS_INIT:
+                    new_key = Placeholders.SAS_FACTS
+                else:
+                    new_key = key.replace(Placeholders.PDDL_INIT, Placeholders.PDDL_ATOMS, 1)
                 if new_key not in atom_lists:
                     raise ValueError("Cannot find %s (for %s) in the associated atom list" % (new_key, key))
                 atoms = atom_lists[new_key]
@@ -91,13 +111,6 @@ class Placeholders(object):
                 v = "[" + ",".join(
                     load_atom_init(args.translate_inputs[0],
                                    args.translate_inputs[1], atoms)) + "]"
-
-            elif key.startswith(Placeholders.PDDL_ATOMS):
-                if atom_lists is None:
-                    atom_lists = load_atom_list(path_problem=args.translate_inputs[1])
-                if key not in atom_lists:
-                    raise ValueError("Cannot find %s in the associated atom list" % key)
-                v = "[" + ",".join(atom_lists[key])+"]"
 
             elif key == Placeholders.SPLIT:
                 v = None
@@ -197,12 +210,14 @@ def replace_options_for_dynamic(dynamic, type, args):
     if type == "pb_network":
         keys = Placeholders.present(
             dynamic, [Placeholders.PDIR, Placeholders.DDIR, Placeholders.FOLD,
-                     Placeholders.PDDL_ATOMS, Placeholders.PDDL_INIT,
+                      Placeholders.PDDL_ATOMS, Placeholders.PDDL_INIT,
+                      Placeholders.SAS_FACTS, Placeholders.SAS_INIT,
                       Placeholders.SPLIT, Placeholders.MODEL_OUTPUT_LAYER])
     elif type in ["network", "evaluator", "heuristic", "search"]:
         keys = Placeholders.present(
             dynamic, [Placeholders.PDIR, Placeholders.DDIR, Placeholders.FOLD,
                       Placeholders.PDDL_ATOMS, Placeholders.PDDL_INIT,
+                      Placeholders.SAS_FACTS, Placeholders.SAS_INIT,
                       Placeholders.MODEL_OUTPUT_LAYER])
     else:
         assert False, "Unknown kind of dynamic command: %s" % type
