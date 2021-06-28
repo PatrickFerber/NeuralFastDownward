@@ -458,6 +458,7 @@ fast_downward_plugin(
     NAME SAMPLING_SEARCH
     HELP "Sampling search algorithm"
     SOURCES
+        sampling_engines/sample_cache
         sampling_engines/sampling_engine
         sampling_engines/sampling_state_engine
         sampling_engines/sampling_search

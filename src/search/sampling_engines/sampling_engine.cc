@@ -22,7 +22,6 @@ const string SAMPLE_FILE_MAGIC_WORD = "# MAGIC FIRST LINE";
    operator ids] and trajectories [state ids]).
    (as everybody can access it, be certain who does and how) */
 
-
 static vector<shared_ptr<sampling_technique::SamplingTechnique>>
 prepare_sampling_techniques(
     vector<shared_ptr<sampling_technique::SamplingTechnique>> input) {
@@ -35,28 +34,19 @@ prepare_sampling_techniques(
 SamplingEngine::SamplingEngine(const options::Options &opts)
     : SearchEngine(opts),
       shuffle_sampling_techniques(opts.get<bool>("shuffle_techniques")),
-      max_sample_cache_size(opts.get<int>("sample_cache_size")),
-      iterate_sample_files(opts.get<bool>("iterate_sample_files")),
-      index_sample_files(opts.get<int>("index_sample_files")),
-      max_sample_files(opts.get<int>("max_sample_files")),
-      count_sample_files(0),
       sampling_techniques(
         prepare_sampling_techniques(
             opts.get_list<shared_ptr<sampling_technique::SamplingTechnique>>(
                 "techniques"))),
       current_technique(sampling_techniques.begin()),
-      rng(utils::parse_rng_from_options(opts)) {
-    if (max_sample_cache_size <= 0) {
-        cerr << "sample_cache_size has to be positive: "
-             << max_sample_cache_size << endl;
-        utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
-    }
-    if (max_sample_files != -1 && max_sample_files <= 0) {
-        cerr << "max_sample_files has to be positive or -1 for unlimited: "
-             << max_sample_files << endl;
-        utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
-    }
-}
+      sample_cache_manager(SampleCacheManager(
+              SampleCache(
+              opts.get<bool>("prune_duplicates")),
+              opts.get<int>("sample_cache_size"),
+              opts.get<bool>("iterate_sample_files"),
+              opts.get<int>("max_sample_files"),
+              opts.get<int>("index_sample_files"), this)),
+      rng(utils::parse_rng_from_options(opts)) {}
 
 void SamplingEngine::initialize() {
     cout << "Initializing Sampling Engine...";
@@ -100,27 +90,19 @@ void SamplingEngine::update_current_technique() {
 }
 
 SearchStatus SamplingEngine::step() {
-    assert(!finalize);
     update_current_technique();
     if (current_technique == sampling_techniques.end()) {
-        finalize = true;
-        save_plan_if_necessary();
         return SOLVED;
     }
 
     const shared_ptr<AbstractTask> next_task = (*current_technique)->next(task);
     vector<string> new_samples =  sample(next_task);
-    sample_cache.push_back(new_samples);
-    sample_cache_size += new_samples.size();
-    if (sample_cache_size > max_sample_cache_size) {
-        save_plan_if_necessary();
-    }
+    sample_cache_manager.insert(new_samples.begin(), new_samples.end());
     return IN_PROGRESS;
 }
 
 void SamplingEngine::print_statistics() const {
-
-    cout << "Generated Entries: " << (generated_samples + sample_cache_size)
+    cout << "Generated Entries: " << (sample_cache_manager.size())
          << endl;
     cout << "Sampling Techniques used:" << endl;
     for (auto &st : sampling_techniques) {
@@ -131,53 +113,7 @@ void SamplingEngine::print_statistics() const {
 }
 
 void SamplingEngine::save_plan_if_necessary() {
-    if (get_status() != SearchStatus::IN_PROGRESS) {
-        finalize = true;
-    }
-    assert(finalize || sample_cache_size >= max_sample_cache_size);
-    while ((finalize || sample_cache_size >= max_sample_cache_size) &&
-           sample_cache_size > 0 &&
-           (max_sample_files == -1 || count_sample_files < max_sample_files)) {
-        ofstream outfile(
-            plan_manager.get_plan_filename() + 
-            ((iterate_sample_files) ? to_string(index_sample_files++) : ""),
-            iterate_sample_files ? ios::trunc : ios::app);
-        outfile << sample_file_header() << endl;
-        size_t nb_samples = 0;
-        size_t idx_vector = 0;
-        size_t idx_sample = 0;
-        for (const vector<string> & samples: sample_cache) {
-            idx_sample = 0;
-            for (const string & sample : samples){
-                outfile << sample << endl;
-                if (++nb_samples >= max_sample_cache_size) {
-                    break;
-                }
-                idx_sample++;
-            }
-            if (nb_samples >= max_sample_cache_size){
-                break;
-            }
-            idx_vector++;
-        }
-        outfile.close();
-        assert(finalize || nb_samples == max_sample_cache_size);
-        if (finalize && nb_samples < max_sample_cache_size) {
-            idx_vector--;
-            idx_sample--;
-        }
-        //Erase saved samples
-        sample_cache[idx_vector].erase(
-            sample_cache[idx_vector].begin(),
-            sample_cache[idx_vector].begin() + idx_sample + 1);
-        sample_cache.erase(
-            sample_cache.begin(),
-            sample_cache.begin() + idx_vector + 
-                ((sample_cache[idx_vector].empty()) ? 1 : 0));
-        sample_cache_size -= nb_samples;
-        generated_samples += nb_samples;
-        count_sample_files++;
-    }
+    sample_cache_manager.finalize();
 }
 
 void SamplingEngine::add_sampling_options(options::OptionParser &parser) {
@@ -218,6 +154,12 @@ void SamplingEngine::add_sampling_options(options::OptionParser &parser) {
         "for unlimited.",
         "-1"
             );
+    parser.add_option<bool>(
+        "prune_duplicates",
+        "Store every sample only once. If the cache size is restricted,"
+        "then duplicates are only pruned between samples which are in memory"
+        "at the same time.",
+        "false");
     utils::add_rng_options(parser);
 }
 }
