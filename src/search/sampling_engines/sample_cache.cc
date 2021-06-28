@@ -127,9 +127,7 @@ void SampleCacheManager::write_to_disk() {
         ++nb_files_written;
     }
     nb_samples_written += newly_written;
-    size_t tmp =sample_cache.size();
     sample_cache.erase(sample_cache.begin(), iter);
-    assert (sample_cache.size() + newly_written== tmp);
 }
 
 void SampleCacheManager::finalize() {
