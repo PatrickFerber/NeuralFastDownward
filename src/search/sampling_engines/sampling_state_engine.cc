@@ -62,16 +62,6 @@ SamplingStateEngine::SamplingStateEngine(const options::Options &opts)
               opts.get<string>("state_format"))),
       field_separator(opts.get<string>("field_separator")),
       state_separator(opts.get<string>("state_separator")) {
-    if (max_sample_cache_size <= 0) {
-        cerr << "sample_cache_size has to be positive: "
-             << max_sample_cache_size << endl;
-        utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
-    }
-    if (max_sample_files != -1 && max_sample_files <= 0) {
-        cerr << "max_sample_files has to be positive or -1 for unlimited: "
-             << max_sample_files << endl;
-        utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
-    }
 }
 
 string SamplingStateEngine::sample_file_header() const {
