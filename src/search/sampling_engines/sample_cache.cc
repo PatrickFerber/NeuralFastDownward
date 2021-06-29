@@ -113,12 +113,12 @@ void SampleCacheManager::write_to_disk() {
                 engine->get_plan_manager().get_plan_filename() +
                 ((iterate_sample_files) ? to_string(index_sample_files++) : ""),
                 iterate_sample_files ? ios::trunc : ios::app);
-        outfile << engine->sample_file_header() << endl;
+        outfile << engine->sample_file_header() << "\n";
 
         size_t nb_samples = 0;
         for (; iter != sample_cache.end() && nb_samples < max_size;
                ++iter, ++nb_samples) {
-            outfile << *iter << endl;
+            outfile << *iter << "\n";
         }
 
         outfile.close();

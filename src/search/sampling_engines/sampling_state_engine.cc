@@ -66,8 +66,8 @@ SamplingStateEngine::SamplingStateEngine(const options::Options &opts)
 
 string SamplingStateEngine::sample_file_header() const {
     ostringstream oss;
-    oss << SAMPLE_FILE_MAGIC_WORD << endl
-        << "# SampleFormat: " << sample_format << endl;
+    oss << SAMPLE_FILE_MAGIC_WORD << "\n"
+        << "# SampleFormat: " << sample_format << "\n";
     if (sample_format == SampleFormat::FIELDS) {
         oss << "# Starts with json format describing the fields, followed by \n"
                "# whitespace followed by all fields separated by "
