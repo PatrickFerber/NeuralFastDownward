@@ -16,7 +16,9 @@
 using namespace std;
 
 Heuristic::Heuristic(const Options &opts)
-    : Evaluator(opts.get_unparsed_config(), true, true, true),
+    : Evaluator(
+            opts.get<string>("alt_name", "<none>") == "<none>" ? opts.get_unparsed_config() : opts.get<string>("alt_name"),
+                    true, true, true),
       heuristic_cache(HEntry(NO_VALUE, true)), //TODO: is true really a good idea here?
       cache_evaluator_values(opts.get<bool>("cache_estimates")),
       task(opts.get<shared_ptr<AbstractTask>>("transform")),
@@ -42,6 +44,7 @@ void Heuristic::add_options_to_parser(OptionParser &parser) {
         "available.",
         "no_transform()");
     parser.add_option<bool>("cache_estimates", "cache heuristic estimates", "true");
+    parser.add_option<string>("alt_name", "alternative name for printing the evaluators name", "<none>");
 }
 
 std::pair<int, double> Heuristic::compute_heuristic_and_confidence(const State &state) {
