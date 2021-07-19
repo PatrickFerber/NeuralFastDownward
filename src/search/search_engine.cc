@@ -15,6 +15,7 @@
 #include "utils/system.h"
 #include "utils/timer.h"
 #include "utils/countdown_timer.h"
+#include "utils/memory.h"
 
 #include <cassert>
 #include <iostream>
@@ -102,7 +103,7 @@ const TaskProxy &SearchEngine::get_task_proxy() const {
 void SearchEngine::search() {
     initialize();
     assert(!timer);
-    timer = make_unique<utils::CountdownTimer>(max_time);
+    timer = utils::make_unique_ptr<utils::CountdownTimer>(max_time);
     double last_statistic_time  = timer->get_elapsed_time();
     while (status == IN_PROGRESS) {
         try {

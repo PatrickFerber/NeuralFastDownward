@@ -4,6 +4,7 @@
 #include "../utils/hash.h"
 
 #include <vector>
+#include <string>
 
 namespace sampling_engine {
 class SamplingEngine;
