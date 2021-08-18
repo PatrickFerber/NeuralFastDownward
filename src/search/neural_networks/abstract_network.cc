@@ -123,8 +123,7 @@ std::vector<FactPair> get_fact_mapping(
         auto iter = name2factpair.find(fact);
         if (iter == name2factpair.end()) {
             not_found++;
-            cout << "Unknown fact: " << task->get_fact_name(iter->second)
-                 << endl;
+            cout << "Unknown fact: " << fact << endl;
             order.push_back(FactPair::no_fact);
         } else {
             order.push_back(iter->second);
