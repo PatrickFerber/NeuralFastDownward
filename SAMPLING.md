@@ -26,7 +26,8 @@
 **Examples:**
 - Generate two new states via regression walks from the goal with walk lengths
   between 5 and 10. The states are solved using `A*(LMcut)`. By default the
-  samples are written to `sas_plan`.
+  samples are written to `sas_plan`. Ignore the message that no solution was 
+  found and check instead the line `Generated Entries: [NUMBER]`
 ```
 ./fast-downward.py --build debug ../benchmarks/gripper/prob01.pddl --search 
 "sampling_search_simple(astar(lmcut(transform=sampling_transform()),
@@ -59,5 +60,3 @@ are the most important ones.
   - the states along the plan
   - the remaining path cost for the state
   - the operators used
-    
-    

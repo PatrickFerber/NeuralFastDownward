@@ -49,7 +49,8 @@ features below.
 
 Generate two state via regression from the goal with random walk lengths
  between 5 and 10. Use `A*(LMcut)` to find a solution and store all states
-  along the plan, as well as the used operators. 
+  along the plan, as well as the used operators in `sas_plan`. Ignore the 
+message that no solution was found.
 
 ```./fast-downward.py --build BUILD ../benchmarks/gripper/prob01.pddl --search 
 "sampling_search_simple(astar(lmcut(transform=sampling_transform()),transform=sampling_transform()), techniques=[gbackward_none(2, distribution=uniform_int_dist(5, 10))])"
@@ -59,7 +60,15 @@ Generate two state via regression from the goal with random walk lengths
 and heuristics) use the original task. Thus, you have to provide them the
 argument `transform=sampling_transform()`.*
   
-
+*ATTENTION: The output tells you that no solution was found. This is wrong. 
+Check if the output contains*
+```
+Generated Entries: X
+Sampling Techniques used:
+  Y: n/N
+  ```
+*This tells you how many samples were generated and how often each sampling 
+technique was invoked.*
   
 [Click here for more information and examples](SAMPLING.md)
   
